@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Test - 雅致中国风</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 { color: #8B4513; margin-top: 0; }
+        button {
+            background: #8B4513;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #A0522D; }
+        .result {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-section">
+        <h2>雅致中国风Prompt测试</h2>
+        <p>测试更新后的prompt是否能生成优雅的古典中文推荐，包含中医经典引用</p>
+
+        <button onclick="testPrompt()">测试Prompt</button>
+
+        <div id="result" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        async function testPrompt() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在测试中，请稍候...';
+
+            try {
+                // 读取prompt文件
+                const promptResponse = await fetch('/api/get-prompt');
+                if (!promptResponse.ok) {
+                    throw new Error('无法读取prompt文件');
+                }
+                const promptText = await promptResponse.text();
+
+                // 检查prompt是否包含雅致中文
+                const checks = {
+                    '包含古典称谓': promptText.includes('阁下'),
+                    '引用黄帝内经': promptText.includes('黄帝内经'),
+                    '使用黄历': promptText.includes('黄历'),
+                    '使用时辰': promptText.includes('时辰'),
+                    '包含天人合一': promptText.includes('天人合一'),
+                    '包含治未病': promptText.includes('治未病'),
+                    '包含节气养生': promptText.includes('节气养生'),
+                    '包含reasoning字段': promptText.includes('reasoning'),
+                    '包含君臣佐使': promptText.includes('君臣佐使')
+                };
+
+                let html = '<h3>Prompt文件检查结果：</h3>\n\n';
+                for (const [check, passed] of Object.entries(checks)) {
+                    html += `${passed ? '[OK]' : '[X]'} ${check}\n`;
+                }
+
+                html += '\n<h3>Prompt内容预览：</h3>\n\n';
+                html += '=== 前50行 ===\n';
+                const lines = promptText.split('\n').slice(0, 50);
+                html += lines.join('\n');
+
+                resultDiv.className = 'result';
+                resultDiv.textContent = html;
+
+            } catch (error) {
+                resultDiv.className = 'result';
+                resultDiv.style.color = 'red';
+                resultDiv.textContent = '测试失败: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

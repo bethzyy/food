@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>环境变量API Key测试</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .result {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #4CAF50;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        .success {
+            background: #e8f5e9;
+            border-left-color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 环境变量API Key测试</h1>
+
+    <div class="test-card">
+        <h2>测试1: 检查环境变量API</h2>
+        <p>点击按钮测试从环境变量读取API Key</p>
+        <button class="button" onclick="testEnvAPI()">测试环境变量API</button>
+        <div id="envResult"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>测试2: 浏览器环境变量检查</h2>
+        <p>检查浏览器环境</p>
+        <button class="button" onclick="testBrowserEnv()">检查浏览器环境</button>
+        <div id="browserResult"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>测试3: localStorage检查</h2>
+        <p>检查localStorage中是否有API Key</p>
+        <button class="button" onclick="testLocalStorage()">检查localStorage</button>
+        <button class="button" onclick="clearLocalStorage()">清空localStorage</button>
+        <div id="storageResult"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>使用说明</h2>
+        <div class="result">
+            <strong>设置环境变量的方法：</strong>
+
+            <strong>Windows PowerShell（推荐）:</strong>
+            $env:ZHIPU_API_KEY="your-api-key-here"
+            然后运行: python test_env_key.py
+
+            <strong>Windows CMD:</strong>
+            set ZHIPU_API_KEY=your-api-key-here
+            然后运行: python test_env_key.py
+
+            <strong>Linux/Mac:</strong>
+            export ZHIPU_API_KEY="your-api-key-here"
+            然后运行: python test_env_key.py
+
+            <strong>注意事项:</strong>
+            1. 环境变量只在当前命令行窗口有效
+            2. 需要重启服务器才能读取新的环境变量
+            3. 如果环境变量未设置，应用会提示手动输入
+        </div>
+    </div>
+
+    <script>
+        async function testEnvAPI() {
+            const resultDiv = document.getElementById('envResult');
+            resultDiv.innerHTML = '<div class="result">正在测试...</div>';
+
+            try {
+                const response = await fetch('/api/env-api-key');
+                const data = await response.json();
+
+                if (response.ok && data.apiKey) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ 成功从环境变量读取API Key</strong>
+                            长度: ${data.length} 字符
+                            预览: ${data.preview}
+                            完整Key: ${data.apiKey}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ 环境变量未设置</strong>
+                            ${data.error || '未知错误'}
+
+                            提示: ${data.hint || ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ 请求失败</strong>
+                        ${error.message}
+
+                        可能原因：
+                        1. 测试服务器未运行（请先运行: python test_env_key.py）
+                        2. 端口不正确
+                    </div>
+                `;
+            }
+        }
+
+        function testBrowserEnv() {
+            const resultDiv = document.getElementById('browserResult');
+            const userAgent = navigator.userAgent;
+            const language = navigator.language;
+            const platform = navigator.platform;
+
+            resultDiv.innerHTML = `
+                <div class="result">
+                    <strong>浏览器环境信息:</strong>
+                    User Agent: ${userAgent}
+                    语言: ${language}
+                    平台: ${platform}
+
+                    <strong>注意:</strong>
+                    浏览器无法直接访问系统环境变量
+                    需要通过后端API（如本测试使用的/api/env-api-key）
+                </div>
+            `;
+        }
+
+        function testLocalStorage() {
+            const resultDiv = document.getElementById('storageResult');
+            const apiKey = localStorage.getItem('ZHIPU_API_KEY');
+
+            if (apiKey) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        <strong>✅ localStorage中存在API Key</strong>
+                        长度: ${apiKey.length} 字符
+                        预览: ${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ localStorage中没有API Key</strong>
+                    </div>
+                `;
+            }
+        }
+
+        function clearLocalStorage() {
+            localStorage.removeItem('ZHIPU_API_KEY');
+            document.getElementById('storageResult').innerHTML = `
+                <div class="result">
+                    <strong>✅ localStorage已清空</strong>
+                </div>
+            `;
+            testLocalStorage();
+        }
+
+        // 页面加载时自动测试
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('测试页面已加载');
+            console.log('请先运行: python test_env_key.py');
+        });
+    </script>
+</body>
+</html>

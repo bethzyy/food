@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试 - 雅致中国风</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 { color: #8B4513; margin-top: 0; }
+        button {
+            background: #8B4513;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover { background: #A0522D; }
+        .result {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.6;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        .success {
+            color: #2e7d32;
+            background: #e8f5e9;
+        }
+        .error {
+            color: #c62828;
+            background: #ffebee;
+        }
+        .json-display {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-section">
+        <h2>GLM-4.7 API测试</h2>
+        <p>测试雅致中国风prompt的API调用和JSON解析</p>
+
+        <button onclick="testAPI()">测试API调用</button>
+        <button onclick="testPromptOnly()">仅测试Prompt</button>
+
+        <div id="result" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        // API配置
+        const API_CONFIG = {
+            baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+            model: 'glm-4-flash'
+        };
+
+        // 获取API Key
+        async function getApiKey() {
+            try {
+                const response = await fetch('/api/env-api-key');
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.apiKey;
+                }
+            } catch (error) {
+                console.log('无法从环境变量获取API Key');
+            }
+            return localStorage.getItem('zhipu_api_key') || '';
+        }
+
+        // 构建测试参数
+        function buildTestParams() {
+            const now = new Date();
+            const solarTerms = {
+                1: '小寒', 2: '大寒', 3: '立春', 4: '雨水', 5: '惊蛰', 6: '春分',
+                7: '清明', 8: '谷雨', 9: '立夏', 10: '小满', 11: '芒种', 12: '夏至',
+                13: '小暑', 14: '大暑', 15: '立秋', 16: '处暑', 17: '白露', 18: '秋分',
+                19: '寒露', 20: '霜降', 21: '立冬', 22: '小雪', 23: '大雪', 24: '冬至'
+            };
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const solarTermIndex = Math.floor((month - 1) * 2 + day / 15) + 1;
+            const solarTerm = solarTerms[Math.min(solarTermIndex, 24)] || '未知';
+
+            return {
+                date: now.toISOString().split('T')[0],
+                time: now.toTimeString().slice(0, 5),
+                mealPeriod: '午餐',
+                dietType: '日常饮食',
+                weather: '晴',
+                solarTerm: solarTerm,
+                season: month >= 3 && month <= 5 ? '春' :
+                       month >= 6 && month <= 8 ? '夏' :
+                       month >= 9 && month <= 11 ? '秋' : '冬'
+            };
+        }
+
+        // 读取prompt文件
+        async function loadPrompt() {
+            const response = await fetch('/api/get-prompt');
+            if (!response.ok) {
+                throw new Error('无法读取prompt文件');
+            }
+            let prompt = await response.text();
+
+            // 替换变量
+            const params = buildTestParams();
+            prompt = prompt.replace(/{solarTerm}/g, params.solarTerm);
+            prompt = prompt.replace(/{season}/g, params.season);
+            prompt = prompt.replace(/{weather}/g, params.weather);
+            prompt = prompt.replace(/{mealPeriod}/g, params.mealPeriod);
+            prompt = prompt.replace(/{dietType}/g, params.dietType);
+            prompt = prompt.replace(/{date}/g, params.date);
+            prompt = prompt.replace(/{time}/g, params.time);
+
+            return prompt;
+        }
+
+        // 解析JSON
+        function parseJSON(content) {
+            console.log('开始解析AI返回内容...');
+
+            // 方法1: 提取```json```代码块
+            const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+            if (jsonMatch) {
+                console.log('使用方法1: 提取```json```代码块');
+                try {
+                    return JSON.parse(jsonMatch[1]);
+                } catch (e) {
+                    console.log('方法1解析失败:', e.message);
+                }
+            }
+
+            // 方法2: 提取第一个{和最后一个}之间的内容
+            const firstBrace = content.indexOf('{');
+            const lastBrace = content.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                console.log('使用方法2: 提取{}之间的内容');
+                try {
+                    const jsonStr = content.substring(firstBrace, lastBrace + 1);
+                    return JSON.parse(jsonStr);
+                } catch (e) {
+                    console.log('方法2解析失败:', e.message);
+                }
+            }
+
+            console.log('所有JSON解析方法都失败');
+            return null;
+        }
+
+        // 测试API调用
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在测试API调用...';
+
+            try {
+                // 获取API Key
+                const apiKey = await getApiKey();
+                if (!apiKey) {
+                    throw new Error('API Key未设置，请先设置环境变量或在浏览器中输入');
+                }
+
+                // 读取prompt
+                const prompt = await loadPrompt();
+
+                // 调用API
+                const params = buildTestParams();
+                resultDiv.textContent = `正在调用GLM-4.7 API...\n\n测试参数:\n节气: ${params.solarTerm}\n季节: ${params.season}\n天气: ${params.weather}\n餐次: ${params.mealPeriod}`;
+
+                const response = await fetch(API_CONFIG.baseUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: API_CONFIG.model,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 3000
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API调用失败: ${response.status} - ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('API返回:', data);
+
+                const content = data.choices[0]?.message?.content;
+                if (!content) {
+                    throw new Error('API返回内容为空');
+                }
+
+                resultDiv.textContent = 'API调用成功！正在解析JSON...';
+
+                // 解析JSON
+                const parsed = parseJSON(content);
+
+                if (parsed) {
+                    // 成功解析
+                    resultDiv.className = 'result success';
+                    let html = '✅ JSON解析成功！\n\n';
+
+                    // 检查必需字段
+                    const checks = {
+                        'dishes字段存在': !!parsed.dishes,
+                        'dishes是数组': Array.isArray(parsed.dishes),
+                        'totalNutrition字段存在': !!parsed.totalNutrition,
+                        'reasoning字段存在': !!parsed.reasoning,
+                        'tips字段存在': !!parsed.tips
+                    };
+
+                    for (const [check, passed] of Object.entries(checks)) {
+                        html += `${passed ? '✓' : '✗'} ${check}\n`;
+                    }
+
+                    if (parsed.dishes && parsed.dishes.length > 0) {
+                        html += `\n菜品数量: ${parsed.dishes.length}道\n`;
+                        html += `\n第一道菜: ${parsed.dishes[0].name}\n`;
+
+                        if (parsed.reasoning) {
+                            html += '\n推荐理由:\n';
+                            html += `- 节气: ${parsed.reasoning.solarTerm?.substring(0, 50)}...\n`;
+                            html += `- 季节: ${parsed.reasoning.season?.substring(0, 50)}...\n`;
+                        }
+                    }
+
+                    html += '\n完整的JSON结构:\n';
+                    html += JSON.stringify(parsed, null, 2);
+
+                    resultDiv.innerHTML = `<pre class="json-display">${html}</pre>`;
+                } else {
+                    // 解析失败，显示原始内容
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '❌ JSON解析失败\n\n原始返回内容:\n' + content;
+                }
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ 测试失败: ' + error.message;
+                console.error('测试错误:', error);
+            }
+        }
+
+        // 仅测试prompt
+        async function testPromptOnly() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在读取prompt文件...';
+
+            try {
+                const prompt = await loadPrompt();
+                const params = buildTestParams();
+
+                // 检查prompt内容
+                const checks = {
+                    '包含古典称谓': prompt.includes('阁下'),
+                    '引用黄帝内经': prompt.includes('黄帝内经'),
+                    '使用黄历': prompt.includes('黄历'),
+                    '使用时辰': prompt.includes('时辰'),
+                    '包含天人合一': prompt.includes('天人合一'),
+                    '包含治未病': prompt.includes('治未病'),
+                    '包含reasoning字段': prompt.includes('reasoning'),
+                    '包含君臣佐使': prompt.includes('君臣佐使'),
+                    '包含节气养生': prompt.includes('节气养生')
+                };
+
+                let html = '✅ Prompt文件检查结果:\n\n';
+                for (const [check, passed] of Object.entries(checks)) {
+                    html += `${passed ? '✓' : '✗'} ${check}\n`;
+                }
+
+                html += '\n测试参数:\n';
+                html += `日期: ${params.date}\n`;
+                html += `时间: ${params.time}\n`;
+                html += `节气: ${params.solarTerm}\n`;
+                html += `季节: ${params.season}\n`;
+                html += `天气: ${params.weather}\n`;
+                html += `餐次: ${params.mealPeriod}\n`;
+                html += `类型: ${params.dietType}\n`;
+
+                html += '\nPrompt内容预览(前100行):\n';
+                const lines = prompt.split('\n').slice(0, 100);
+                html += lines.join('\n');
+
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `<pre class="json-display">${html}</pre>`;
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ 测试失败: ' + error.message;
+                console.error('测试错误:', error);
+            }
+        }
+    </script>
+</body>
+</html>

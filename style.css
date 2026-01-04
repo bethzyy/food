@@ -1,0 +1,704 @@
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* 春季配色 - 中国风 */
+    --spring-primary: #7cb342;
+    --spring-secondary: #aed581;
+    --spring-bg: #f9fbe7;
+    --spring-accent: #558b2f;
+
+    /* 夏季配色 - 中国风 */
+    --summer-primary: #4fc3f7;
+    --summer-secondary: #81d4fa;
+    --summer-bg: #e1f5fe;
+    --summer-accent: #0288d1;
+
+    /* 秋季配色 - 中国风 */
+    --autumn-primary: #ffb74d;
+    --autumn-secondary: #ffcc80;
+    --autumn-bg: #fff3e0;
+    --autumn-accent: #ef6c00;
+
+    /* 冬季配色 - 中国风 */
+    --winter-primary: #90a4ae;
+    --winter-secondary: #b0bec5;
+    --winter-bg: #eceff1;
+    --winter-accent: #546e7a;
+
+    /* 中国风传统色 */
+    --china-red: #c62828;
+    --china-gold: #ff8f00;
+    --china-jade: #2e7d32;
+    --china-ink: #263238;
+
+    /* 默认主题色 */
+    --primary-color: #7cb342;
+    --secondary-color: #aed581;
+    --accent-color: #558b2f;
+    --bg-color: #f9fbe7;
+    --text-color: #37474f;
+    --text-light: #546e7a;
+    --border-color: #e0e0e0;
+    --card-bg: #ffffff;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: "PingFang SC", "Microsoft YaHei", "STHeiti", "SimSun", serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    padding: 20px 10px;
+    transition: background 0.3s ease;
+    line-height: 1.8;
+}
+
+/* 应用容器 */
+.app-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 头部样式 */
+.app-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 24px 20px;
+    text-align: center;
+    transition: background 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.app-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.3;
+}
+
+.app-header h1 {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15);
+    position: relative;
+    letter-spacing: 2px;
+}
+
+.subtitle {
+    font-size: 13px;
+    opacity: 0.95;
+    position: relative;
+    letter-spacing: 1px;
+}
+
+/* 主内容区 */
+.main-content {
+    padding: 20px;
+}
+
+/* 区块样式 */
+.section {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.section:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 1px;
+}
+
+/* 日期时间容器 */
+.datetime-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    font-size: 14px;
+    color: var(--text-light);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.styled-input,
+.styled-select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.styled-input:focus,
+.styled-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1);
+}
+
+/* 按钮样式 */
+.primary-btn {
+    width: 100%;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    letter-spacing: 1px;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
+}
+
+.primary-btn:active {
+    transform: translateY(0);
+}
+
+.secondary-btn {
+    padding: 10px 20px;
+    background: white;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.secondary-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* 位置信息 */
+.location-info {
+    padding: 15px;
+    background: var(--bg-color);
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.location-text {
+    font-size: 16px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.weather-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.weather-select {
+    display: flex;
+    flex-direction: column;
+}
+
+.weather-select label {
+    font-size: 14px;
+    color: var(--text-light);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+/* 单选按钮组 */
+.meal-period,
+.diet-type {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.radio-label {
+    flex: 1;
+    min-width: 100px;
+    position: relative;
+}
+
+.radio-label input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.radio-text {
+    display: block;
+    padding: 12px 20px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.radio-label input[type="radio"]:checked + .radio-text {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+/* 结果展示区 */
+.result-section {
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.info-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary-color);
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+.card-content {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text-color);
+}
+
+.card-content p {
+    margin-bottom: 12px;
+}
+
+.card-content strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* 加载动画 */
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid var(--border-color);
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading p {
+    color: var(--text-light);
+    font-size: 16px;
+}
+
+.loading-text {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 15px 0;
+    color: var(--text-color);
+}
+
+.loading-subtext {
+    font-size: 14px;
+    color: var(--text-light);
+    margin: 10px 0;
+}
+
+.loading-hint {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 5px 0;
+    font-style: italic;
+}
+
+/* 营养图表 */
+.nutrition-chart {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--bg-color);
+    border-radius: 10px;
+}
+
+#nutritionChart {
+    max-height: 300px;
+}
+
+/* 页脚 */
+.app-footer {
+    background: var(--bg-color);
+    padding: 20px;
+    text-align: center;
+    color: var(--text-light);
+    font-size: 13px;
+}
+
+.footer-note {
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+/* 季节主题类 */
+body.spring {
+    --primary-color: var(--spring-primary);
+    --secondary-color: var(--spring-secondary);
+    --bg-color: var(--spring-bg);
+}
+
+body.summer {
+    --primary-color: var(--summer-primary);
+    --secondary-color: var(--summer-secondary);
+    --bg-color: var(--summer-bg);
+}
+
+body.autumn {
+    --primary-color: var(--autumn-primary);
+    --secondary-color: var(--autumn-secondary);
+    --bg-color: var(--autumn-bg);
+}
+
+body.winter {
+    --primary-color: var(--winter-primary);
+    --secondary-color: var(--winter-secondary);
+    --bg-color: var(--winter-bg);
+}
+
+/* 环境信息综合板块 */
+.environment-section {
+    padding: 12px;
+}
+
+.env-block {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.env-block:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.env-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--bg-color);
+}
+
+.env-icon {
+    font-size: 16px;
+}
+
+.env-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.env-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 日期时间行 */
+.datetime-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.datetime-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.datetime-item label {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.datetime-item input {
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+/* 节气显示 */
+.solar-term-display {
+    background: var(--bg-color);
+    padding: 6px 10px;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+#currentSolarTerm {
+    display: inline-block;
+}
+
+/* 位置天气行 */
+.location-weather-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.location-item,
+.weather-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.location-item label,
+.weather-item label {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.weather-item select {
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+/* 位置显示 */
+.location-display {
+    min-height: 32px;
+    background: var(--bg-color);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+}
+
+.location-placeholder {
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.location-text {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* 小按钮 */
+.small-btn {
+    padding: 6px 12px;
+    background: white;
+    color: var(--primary-color);
+    border: 1.5px solid var(--primary-color);
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    align-self: flex-start;
+}
+
+.small-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.small-btn:active {
+    transform: translateY(0);
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+    body {
+        padding: 10px 5px;
+    }
+
+    .app-header h1 {
+        font-size: 24px;
+    }
+
+    .subtitle {
+        font-size: 12px;
+    }
+
+    .section {
+        padding: 15px;
+    }
+
+    .datetime-container {
+        grid-template-columns: 1fr;
+    }
+
+    .meal-period,
+    .diet-type {
+        flex-direction: column;
+    }
+
+    .radio-label {
+        min-width: auto;
+    }
+
+    .primary-btn {
+        font-size: 16px;
+        padding: 14px 25px;
+    }
+
+    .card-content {
+        font-size: 15px;
+    }
+}
+
+/* 错误提示 */
+.error-message {
+    background: #ffebee;
+    color: #c62828;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border-left: 4px solid #c62828;
+    font-size: 14px;
+}
+
+/* 菜品列表 */
+.dish-list {
+    list-style: none;
+    padding: 0;
+}
+
+.dish-list li {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    background: var(--bg-color);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.dish-list li strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 16px;
+}
+
+/* 营养数据表格 */
+.nutrition-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.nutrition-table th,
+.nutrition-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nutrition-table th {
+    background: var(--bg-color);
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.nutrition-table tr:last-child td {
+    border-bottom: none;
+}

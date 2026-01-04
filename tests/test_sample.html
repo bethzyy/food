@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面 - 养生饮食推荐</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #7cb342;
+        }
+        h2 {
+            color: #42a5f5;
+            margin-top: 0;
+        }
+        button {
+            background: #7cb342;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #689f38;
+        }
+        .result {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #7cb342;
+        }
+        .error {
+            background: #ffebee;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #f44336;
+        }
+        .log-entry {
+            background: #fff3e0;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 养生饮食推荐应用 - 测试页面</h1>
+
+    <div class="test-section">
+        <h2>1. API Key 测试</h2>
+        <p>测试是否能够获取和验证API Key</p>
+        <button onclick="testApiKey()">测试API Key</button>
+        <div id="apiKeyResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 节气判断测试</h2>
+        <p>测试不同日期的节气判断功能</p>
+        <input type="date" id="testDate" value="2024-03-21">
+        <button onclick="testSolarTerm()">测试节气</button>
+        <div id="solarTermResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. 季节主题测试</h2>
+        <p>测试不同季节的主题切换</p>
+        <button onclick="testSeason('spring')">春季主题</button>
+        <button onclick="testSeason('summer')">夏季主题</button>
+        <button onclick="testSeason('autumn')">秋季主题</button>
+        <button onclick="testSeason('winter')">冬季主题</button>
+        <div id="seasonResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. 提示词加载测试</h2>
+        <p>测试提示词文件加载和替换功能</p>
+        <button onclick="testPrompt()">测试提示词</button>
+        <div id="promptResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. 日志记录测试</h2>
+        <p>测试日志记录和导出功能</p>
+        <button onclick="testLog()">记录测试日志</button>
+        <button onclick="testExportLog()">导出日志</button>
+        <button onclick="testClearLog()">清空日志</button>
+        <div id="logResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. 完整推荐流程测试</h2>
+        <p>测试完整的饮食推荐生成流程</p>
+        <button onclick="testFullRecommendation()">测试完整流程</button>
+        <div id="fullTestResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>7. 数据格式兼容性测试</h2>
+        <p>测试新旧JSON格式的兼容性</p>
+        <button onclick="testOldFormat()">测试旧格式</button>
+        <button onclick="testNewFormat()">测试新格式</button>
+        <div id="formatResult"></div>
+    </div>
+
+    <script src="../app.js"></script>
+    <script>
+        let app;
+
+        // 初始化应用
+        window.addEventListener('DOMContentLoaded', () => {
+            app = new FoodRecommendationApp();
+        });
+
+        // 测试API Key
+        async function testApiKey() {
+            const resultDiv = document.getElementById('apiKeyResult');
+            resultDiv.innerHTML = '<p>正在测试...</p>';
+
+            try {
+                const apiKey = await app.getApiKey();
+                if (apiKey) {
+                    resultDiv.innerHTML = `
+                        <div class="result">
+                            <h4>✅ API Key 获取成功</h4>
+                            <p>Key长度: ${apiKey.length} 字符</p>
+                            <p>Key格式: ${apiKey.substring(0, 10)}...</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ 未找到 API Key</h4>
+                            <p>请设置系统变量 ZHIPU_API_KEY 或在浏览器中输入</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ 测试失败</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 测试节气判断
+        function testSolarTerm() {
+            const dateInput = document.getElementById('testDate').value;
+            const resultDiv = document.getElementById('solarTermResult');
+
+            const date = new Date(dateInput);
+            const solarTerm = app.getCurrentSolarTerm(date);
+            const season = app.getSeason(date);
+            const seasonName = app.getSeasonName(season);
+
+            resultDiv.innerHTML = `
+                <div class="result">
+                    <h4>✅ 节气判断结果</h4>
+                    <p><strong>日期:</strong> ${dateInput}</p>
+                    <p><strong>节气/季节:</strong> ${solarTerm.name}</p>
+                    <p><strong>季节:</strong> ${seasonName} (${season})</p>
+                </div>
+            `;
+        }
+
+        // 测试季节主题
+        function testSeason(season) {
+            document.body.className = '';
+            document.body.classList.add(season);
+
+            const seasonNames = {
+                spring: '春季',
+                summer: '夏季',
+                autumn: '秋季',
+                winter: '冬季'
+            };
+
+            document.getElementById('seasonResult').innerHTML = `
+                <div class="result">
+                    <h4>✅ 主题已切换</h4>
+                    <p>当前主题: ${seasonNames[season]}</p>
+                </div>
+            `;
+        }
+
+        // 测试提示词
+        async function testPrompt() {
+            const resultDiv = document.getElementById('promptResult');
+            resultDiv.innerHTML = '<p>正在加载提示词...</p>';
+
+            try {
+                const params = {
+                    date: '2024-03-21',
+                    time: '08:00',
+                    mealPeriod: '早餐',
+                    dietType: '日常饮食',
+                    weather: '晴',
+                    solarTerm: '春分',
+                    season: '春季'
+                };
+
+                const prompt = await app.buildPrompt(params);
+
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <h4>✅ 提示词生成成功</h4>
+                        <p><strong>提示词长度:</strong> ${prompt.length} 字符</p>
+                        <p><strong>预览 (前200字符):</strong></p>
+                        <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;">${prompt.substring(0, 200)}...</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ 提示词生成失败</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 测试日志记录
+        async function testLog() {
+            const resultDiv = document.getElementById('logResult');
+
+            await app.logger.log('TEST_EVENT', {
+                message: '这是一条测试日志',
+                timestamp: new Date().toISOString()
+            });
+
+            const logs = app.logger.getLogs();
+            resultDiv.innerHTML = `
+                <div class="result">
+                    <h4>✅ 日志记录成功</h4>
+                    <p>当前日志数量: ${logs.length}</p>
+                </div>
+            `;
+        }
+
+        // 导出日志
+        function testExportLog() {
+            app.logger.exportLogs();
+            document.getElementById('logResult').innerHTML += `
+                <div class="result">
+                    <h4>✅ 日志已导出</h4>
+                    <p>日志文件已下载</p>
+                </div>
+            `;
+        }
+
+        // 清空日志
+        function testClearLog() {
+            app.logger.clearLogs();
+            document.getElementById('logResult').innerHTML = `
+                <div class="result">
+                    <h4>✅ 日志已清空</h4>
+                </div>
+            `;
+        }
+
+        // 测试完整推荐流程
+        async function testFullRecommendation() {
+            const resultDiv = document.getElementById('fullTestResult');
+            resultDiv.innerHTML = '<p>正在测试完整推荐流程...</p>';
+
+            try {
+                const recommendation = await app.callGLMAPI({
+                    date: '2024-03-21',
+                    time: '08:00',
+                    mealPeriod: '早餐',
+                    dietType: '日常饮食',
+                    weather: '晴',
+                    solarTerm: '春分',
+                    season: '春季'
+                });
+
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <h4>✅ 完整流程测试成功</h4>
+                        <p><strong>菜品数量:</strong> ${recommendation.dishes.length}</p>
+                        <p><strong>总热量:</strong> ${recommendation.totalNutrition.calories} 大卡</p>
+                        <p><strong>第一道菜:</strong> ${recommendation.dishes[0].name}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ 完整流程测试失败</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 测试旧格式
+        function testOldFormat() {
+            const oldFormat = {
+                dishes: [
+                    {
+                        name: '测试菜品',
+                        ingredients: ['食材1', '食材2'],
+                        nutrition: '营养丰富',
+                        recipe: ['步骤1', '步骤2']
+                    }
+                ],
+                totalNutrition: {
+                    calories: 500,
+                    protein: 30,
+                    fat: 20,
+                    carbs: 50,
+                    vitamins: ['VA', 'VC'],
+                    minerals: ['钙', '铁'],
+                    summary: '营养均衡'
+                }
+            };
+
+            app.displayRecommendation(oldFormat);
+
+            document.getElementById('formatResult').innerHTML = `
+                <div class="result">
+                    <h4>✅ 旧格式兼容性测试通过</h4>
+                    <p>已成功渲染旧格式数据</p>
+                </div>
+            `;
+        }
+
+        // 测试新格式
+        function testNewFormat() {
+            const newFormat = {
+                dishes: [
+                    {
+                        name: '新测试菜品',
+                        type: '主食',
+                        ingredients: [
+                            {item: '大米', amount: '100g', effect: '补中益气'},
+                            {item: '鸡蛋', amount: '50g', effect: '滋阴润燥'}
+                        ],
+                        recipe: ['步骤1', '步骤2', '步骤3'],
+                        nutrition: {
+                            calories: 300,
+                            protein: 15,
+                            fat: 10,
+                            carbs: 40,
+                            description: '营养均衡'
+                        },
+                        suitable: '适合所有人群'
+                    }
+                ],
+                totalNutrition: {
+                    calories: 600,
+                    protein: {
+                        amount: 35,
+                        percentage: 23.3,
+                        sources: '鸡蛋、大米'
+                    },
+                    fat: {
+                        amount: 22,
+                        percentage: 14.7,
+                        sources: '鸡蛋'
+                    },
+                    carbs: {
+                        amount: 65,
+                        percentage: 43.3,
+                        sources: '大米'
+                    },
+                    vitamins: [
+                        {name: '维生素A', amount: '200μg'},
+                        {name: '维生素C', amount: '10mg'}
+                    ],
+                    minerals: [
+                        {name: '钙', amount: '50mg'},
+                        {name: '铁', amount: '3mg'}
+                    ],
+                    summary: '营养均衡，符合春季养生特点'
+                },
+                tips: {
+                    shopping: '选择新鲜食材',
+                    cooking: '注意火候',
+                    pairing: '配绿茶',
+                    taboo: '无特殊禁忌'
+                }
+            };
+
+            app.displayRecommendation(newFormat);
+
+            document.getElementById('formatResult').innerHTML = `
+                <div class="result">
+                    <h4>✅ 新格式兼容性测试通过</h4>
+                    <p>已成功渲染新格式数据</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
