@@ -6,47 +6,56 @@
 }
 
 :root {
-    /* 春季配色 - 中国风 */
-    --spring-primary: #7cb342;
-    --spring-secondary: #aed581;
-    --spring-bg: #f9fbe7;
-    --spring-accent: #558b2f;
+    /* 春季配色 - 春和景明 */
+    --spring-primary: #c2185b; /* 海棠红 */
+    --spring-secondary: #ec407a; /* 梅红 */
+    --spring-bg: #fff0f5; /* 淡粉白 */
+    --spring-accent: #880e4f; /* 深红 */
+    --spring-text: #4a1423; /* 暗红 */
 
-    /* 夏季配色 - 中国风 */
-    --summer-primary: #4fc3f7;
-    --summer-secondary: #81d4fa;
-    --summer-bg: #e1f5fe;
-    --summer-accent: #0288d1;
+    /* 夏季配色 - 荷映日辉 */
+    --summer-primary: #00897b; /* 竹青 */
+    --summer-secondary: #26a69a; /* 青绿 */
+    --summer-bg: #e0f2f1; /* 淡青白 */
+    --summer-accent: #00695c; /* 深青 */
+    --summer-text: #004d40; /* 墨绿 */
 
-    /* 秋季配色 - 中国风 */
-    --autumn-primary: #ffb74d;
-    --autumn-secondary: #ffcc80;
-    --autumn-bg: #fff3e0;
-    --autumn-accent: #ef6c00;
+    /* 秋季配色 - 金风玉露 */
+    --autumn-primary: #e65100; /* 杏黄 */
+    --autumn-secondary: #ff9800; /* 橘黄 */
+    --autumn-bg: #fff8e1; /* 淡杏白 */
+    --autumn-accent: #bf360c; /* 赭石 */
+    --autumn-text: #5d3a1a; /* 深褐 */
 
-    /* 冬季配色 - 中国风 */
-    --winter-primary: #90a4ae;
-    --winter-secondary: #b0bec5;
-    --winter-bg: #eceff1;
-    --winter-accent: #546e7a;
+    /* 冬季配色 - 煮雪烹茶 */
+    --winter-primary: #5e35b1; /* 紫檀 */
+    --winter-secondary: #7e57c2; /* 藕荷 */
+    --winter-bg: #f3e5f5; /* 淡紫白 */
+    --winter-accent: #4527a0; /* 深紫 */
+    --winter-text: #311b92; /* 墨紫 */
 
-    /* 中国风传统色 */
-    --china-red: #c62828;
-    --china-gold: #ff8f00;
-    --china-jade: #2e7d32;
-    --china-ink: #263238;
+    /* 中国风传统色 - 雅致配色 */
+    --china-red: #b71c1c;      /* 胭脂红 */
+    --china-gold: #cfb53b;     /* 古金 */
+    --china-jade: #2e7d32;     /* 碧玉 */
+    --china-ink: #212121;      /* 徽墨 */
+    --china-brown: #8d6e63;    /* 茶褐 */
+    --china-purple: #6a1b9a;   /* 紫藤 */
+    --china-cyan: #006064;     /* 黛蓝 */
+    --china-rouge: #d81b60;    /* 胭脂 */
+    --china-vermilion: #e64a19; /* 朱砂 */
 
-    /* 默认主题色 */
-    --primary-color: #7cb342;
-    --secondary-color: #aed581;
-    --accent-color: #558b2f;
-    --bg-color: #f9fbe7;
-    --text-color: #37474f;
-    --text-light: #546e7a;
-    --border-color: #e0e0e0;
+    /* 默认主题色（春季） */
+    --primary-color: #c2185b;
+    --secondary-color: #ec407a;
+    --accent-color: #880e4f;
+    --bg-color: #fff0f5;
+    --text-color: #4a1423;
+    --text-light: #880e4f;
+    --border-color: #f8bbd0;
     --card-bg: #ffffff;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow: 0 2px 8px rgba(194, 24, 91, 0.08);
+    --shadow-hover: 0 4px 12px rgba(194, 24, 91, 0.15);
 }
 
 body {
@@ -397,6 +406,305 @@ body {
     font-style: italic;
 }
 
+/* 菜品网格布局 */
+.dish-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+/* 菜品卡片 */
+.dish-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary-color);
+}
+
+.dish-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+
+/* 菜品主要内容 */
+.dish-main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 小类型徽章 */
+.dish-type-badge-small {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-left: 10px;
+    font-weight: 500;
+}
+
+/* 菜品图片容器 */
+.dish-image-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.dish-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.dish-card:hover .dish-image {
+    transform: scale(1.05);
+}
+
+.dish-type-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.dish-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.dish-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.dish-emoji {
+    font-size: 48px;
+    line-height: 1;
+}
+
+.dish-title-group {
+    flex: 1;
+}
+
+.dish-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 5px 0;
+}
+
+.dish-type {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.dish-body {
+    margin-bottom: 15px;
+}
+
+.dish-ingredients {
+    margin-bottom: 12px;
+}
+
+.dish-ingredients .label {
+    font-size: 13px;
+    color: var(--text-light);
+    margin: 0 0 5px 0;
+    font-weight: 500;
+}
+
+.dish-ingredients .value {
+    font-size: 15px;
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.dish-nutrition {
+    margin-bottom: 12px;
+}
+
+.nutrition-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    color: white;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.dish-suitable {
+    padding: 10px;
+    background: var(--bg-color);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.dish-suitable .label {
+    font-size: 13px;
+    color: var(--text-light);
+    margin: 0 0 5px 0;
+    font-weight: 500;
+}
+
+.dish-suitable .value {
+    font-size: 14px;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.toggle-recipe {
+    width: 100%;
+    padding: 10px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toggle-recipe:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.recipe-content {
+    margin-top: 15px;
+    padding: 15px;
+    background: var(--bg-color);
+    border-radius: 8px;
+}
+
+.recipe-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.recipe-step {
+    display: flex;
+    gap: 10px;
+    line-height: 1.6;
+}
+
+.step-num {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* 推荐理由卡片 */
+.reasoning-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.reasoning-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.reason-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: var(--bg-color);
+    border-radius: 10px;
+}
+
+.reason-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.reason-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin: 0 0 5px 0;
+}
+
+.reason-text {
+    font-size: 14px;
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* 温馨提示卡片 */
+.tips-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.tip-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-color);
+    border-radius: 8px;
+}
+
+.tip-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.tip-item p {
+    font-size: 13px;
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.6;
+}
+
 /* 营养图表 */
 .nutrition-chart {
     margin-top: 20px;
@@ -427,25 +735,49 @@ body {
 body.spring {
     --primary-color: var(--spring-primary);
     --secondary-color: var(--spring-secondary);
+    --accent-color: var(--spring-accent);
     --bg-color: var(--spring-bg);
+    --text-color: var(--spring-text);
+    --text-light: var(--spring-accent);
+    --border-color: #f48fb1;
+    --shadow: 0 2px 8px rgba(194, 24, 91, 0.08);
+    --shadow-hover: 0 4px 12px rgba(194, 24, 91, 0.15);
 }
 
 body.summer {
     --primary-color: var(--summer-primary);
     --secondary-color: var(--summer-secondary);
+    --accent-color: var(--summer-accent);
     --bg-color: var(--summer-bg);
+    --text-color: var(--summer-text);
+    --text-light: var(--summer-accent);
+    --border-color: #80cbc4;
+    --shadow: 0 2px 8px rgba(0, 137, 123, 0.08);
+    --shadow-hover: 0 4px 12px rgba(0, 137, 123, 0.15);
 }
 
 body.autumn {
     --primary-color: var(--autumn-primary);
     --secondary-color: var(--autumn-secondary);
+    --accent-color: var(--autumn-accent);
     --bg-color: var(--autumn-bg);
+    --text-color: var(--autumn-text);
+    --text-light: var(--autumn-accent);
+    --border-color: #ffb74d;
+    --shadow: 0 2px 8px rgba(230, 81, 0, 0.08);
+    --shadow-hover: 0 4px 12px rgba(230, 81, 0, 0.15);
 }
 
 body.winter {
     --primary-color: var(--winter-primary);
     --secondary-color: var(--winter-secondary);
+    --accent-color: var(--winter-accent);
     --bg-color: var(--winter-bg);
+    --text-color: var(--winter-text);
+    --text-light: var(--winter-accent);
+    --border-color: #9575cd;
+    --shadow: 0 2px 8px rgba(94, 53, 177, 0.08);
+    --shadow-hover: 0 4px 12px rgba(94, 53, 177, 0.15);
 }
 
 /* 环境信息综合板块 */
@@ -456,7 +788,7 @@ body.winter {
 .env-block {
     background: var(--card-bg);
     border-radius: 10px;
-    padding: 12px;
+    padding: 10px;
     margin-bottom: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid var(--border-color);
@@ -489,6 +821,95 @@ body.winter {
 .env-body {
     display: flex;
     flex-direction: column;
+    gap: 8px;
+}
+
+/* 紧凑信息行 - 新设计 */
+.compact-info-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.compact-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.compact-item label {
+    font-size: 10px;
+    color: var(--text-light);
+    margin-bottom: 3px;
+    font-weight: 500;
+}
+
+.compact-input,
+.compact-select {
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    background: white;
+    width: 100%;
+}
+
+.compact-input:focus,
+.compact-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(124, 179, 66, 0.1);
+}
+
+/* 天干地支和节气显示行 */
+.ganzhi-solar-term-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.ganzhi-display {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.solar-term-alert {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.solar-term-alert.upcoming {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    color: #d35400;
+}
+
+.solar-term-alert.today {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: white;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+/* 操作按钮行 */
+.action-buttons {
+    display: flex;
+    justify-content: center;
     gap: 8px;
 }
 

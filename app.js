@@ -117,7 +117,7 @@ class FoodRecommendationApp {
             this.updateSolarTermDisplay();
         });
 
-        // 自动获取位置按钮
+        // 自动获取位置按钮（已移除位置功能）
         document.getElementById('autoLocationBtn').addEventListener('click', () => {
             this.autoGetLocation();
         });
@@ -169,6 +169,9 @@ class FoodRecommendationApp {
 
         // 更新季节背景
         this.detectAndSetSeason();
+
+        // 更新天干地支和节气显示
+        this.updateSolarTermDisplay();
     }
 
     // 根据时间自动设置早中晚
@@ -192,37 +195,37 @@ class FoodRecommendationApp {
 
     // 自动获取位置信息
     async autoGetLocation() {
-        const locationInfo = document.getElementById('locationInfo');
+        const locationInput = document.getElementById('locationInput');
 
         if (!navigator.geolocation) {
-            locationInfo.innerHTML = '<span class="location-text">❌ 浏览器不支持定位</span>';
+            locationInput.value = '浏览器不支持定位';
             return;
         }
 
-        locationInfo.innerHTML = '<span class="location-text">📍 正在获取位置...</span>';
+        locationInput.value = '正在定位...';
 
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
                 this.currentLocation = { lat: latitude, lng: longitude };
 
-                // 使用IP定位API作为备选
+                // 使用逆地理编码获取城市名
                 const location = await this.reverseGeocode(latitude, longitude);
-                locationInfo.innerHTML = `<span class="location-text">📍 ${location.city}</span>`;
+                locationInput.value = location.city || location.address || '未知位置';
 
-                // 自动获取天气
-                this.getWeather(latitude, longitude);
+                console.log('定位成功:', location);
             },
             async (error) => {
                 console.error('获取位置失败:', error);
 
                 // 使用IP定位作为备选方案
-                locationInfo.innerHTML = '<span class="location-text">🌐 使用IP定位...</span>';
+                locationInput.value = '使用IP定位...';
                 const location = await this.getLocationByIP();
                 if (location) {
-                    locationInfo.innerHTML = `<span class="location-text">📍 ${location}</span>`;
+                    locationInput.value = location;
                 } else {
-                    locationInfo.innerHTML = '<span class="location-placeholder">请手动选择位置</span>';
+                    locationInput.value = '';
+                    locationInput.placeholder = '定位失败，请输入地名';
                 }
             }
         );
@@ -247,12 +250,12 @@ class FoodRecommendationApp {
         return null;
     }
 
-    // 逆地理编码 - 使用高德地图API（免费额度）
+    // 逆地理编码 - 使用Nominatim（OpenStreetMap的免费服务）
     async reverseGeocode(lat, lng) {
         try {
-            // 使用高德地图逆地理编码API
+            // 使用Nominatim逆地理编码API（免费，无需API Key）
             const response = await fetch(
-                `https://restapi.amap.com/v3/geocode/regeo?key=YOUR_AMAP_KEY&location=${lng},${lat}&extensions=base`
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=zh-CN`
             );
 
             if (!response.ok) {
@@ -260,20 +263,21 @@ class FoodRecommendationApp {
             }
 
             const data = await response.json();
-            if (data.status === '1' && data.regeocode) {
-                const addressComponent = data.regeocode.addressComponent;
+            if (data && data.address) {
+                const address = data.address;
+                // 优先返回城市，如果没有城市则返回省份或区
+                const city = address.city || address.town || address.county || address.province || '未知位置';
                 return {
-                    city: addressComponent.city || addressComponent.province,
-                    province: addressComponent.province,
-                    district: addressComponent.district
+                    city: city,
+                    address: data.display_name.split(',')[0] // 使用地址的第一部分
                 };
             }
 
-            return { city: '未知城市' };
+            return { city: '未知城市', address: '' };
         } catch (error) {
             console.error('逆地理编码失败:', error);
             // 返回默认城市
-            return { city: '北京' };
+            return { city: '位置获取失败', address: '' };
         }
     }
 
@@ -360,17 +364,129 @@ class FoodRecommendationApp {
     // 更新节气显示
     updateSolarTermDisplay() {
         const dateInput = document.getElementById('dateInput').value;
+        const timeInput = document.getElementById('timeInput').value;
         if (!dateInput) return;
 
         const date = new Date(dateInput);
-        const solarTerm = this.getCurrentSolarTerm(date);
-        const season = this.getSeason(date);
-        const seasonName = this.getSeasonName(season);
+        const [hours, minutes] = timeInput.split(':').map(Number);
 
-        const displayElement = document.getElementById('currentSolarTerm');
+        // 更新天干地支显示
+        this.updateGanzhiDisplay(date, hours, minutes);
+
+        // 更新节气提醒显示
+        this.updateSolarTermAlert(date);
+    }
+
+    // 计算并显示天干地支
+    updateGanzhiDisplay(date, hours, minutes) {
+        const ganzhi = this.calculateGanzhi(date, hours, minutes);
+        const displayElement = document.getElementById('ganzhiDisplay');
         if (displayElement) {
-            displayElement.innerHTML = `🌿 ${solarTerm.name} (${seasonName})`;
+            displayElement.textContent = ganzhi;
         }
+    }
+
+    // 计算天干地支
+    calculateGanzhi(date, hours, minutes) {
+        // 天干
+        const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        // 地支
+        const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+        // 生肖
+        const zodiacAnimals = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+
+        // 计算年干支（以立春为界）
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+
+        // 简化处理：1月、2月按上一年算
+        let lunarYear = year;
+        if (month === 1 || (month === 2 && day < 4)) {
+            lunarYear = year - 1;
+        }
+
+        const yearStemIndex = (lunarYear - 4) % 10;
+        const yearBranchIndex = (lunarYear - 4) % 12;
+
+        // 计算月干支（简化版）
+        const monthStemIndex = ((lunarYear % 10) * 2 + (month - 1) % 12) % 10;
+        const monthBranchIndex = (month + 1) % 12;
+
+        // 计算日干支（基准日1900年1月1日是甲戌日）
+        const baseDate = new Date(1900, 0, 1);
+        const daysDiff = Math.floor((date - baseDate) / (1000 * 60 * 60 * 24));
+        const dayStemIndex = (0 + daysDiff) % 10;
+        const dayBranchIndex = (10 + daysDiff) % 12;
+
+        // 计算时干支
+        const hourBranchIndex = Math.floor((hours + 1) / 2) % 12;
+        const hourStemIndex = (dayStemIndex * 2 + Math.floor((hours + 1) / 2)) % 10;
+
+        // 时辰名称
+        const shichenNames = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时',
+                              '午时', '未时', '申时', '酉时', '戌时', '亥时'];
+        const hourIndex = Math.floor((hours + 1) / 2) % 12;
+        const shichen = shichenNames[hourIndex];
+
+        return `${heavenlyStems[yearStemIndex]}${earthlyBranches[yearBranchIndex]}年 ` +
+               `${heavenlyStems[monthStemIndex]}${earthlyBranches[monthBranchIndex]}月 ` +
+               `${heavenlyStems[dayStemIndex]}${earthlyBranches[dayBranchIndex]}日 ` +
+               `${heavenlyStems[hourStemIndex]}${earthlyBranches[hourBranchIndex]}时 ` +
+               `(${shichen} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')})`;
+    }
+
+    // 更新节气提醒
+    updateSolarTermAlert(date) {
+        const today = new Date(date);
+        const tomorrow = new Date(date);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const yesterday = new Date(date);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const todayTerm = this.getSolarTermForDate(today);
+        const tomorrowTerm = this.getSolarTermForDate(tomorrow);
+        const yesterdayTerm = this.getSolarTermForDate(yesterday);
+
+        const alertElement = document.getElementById('solarTermAlert');
+
+        if (alertElement) {
+            alertElement.className = 'solar-term-alert'; // 重置类名
+
+            if (todayTerm) {
+                // 今天是节气
+                alertElement.textContent = `✨ 今日${todayTerm.name} ✨`;
+                alertElement.classList.add('today');
+            } else if (tomorrowTerm) {
+                // 明天是节气
+                alertElement.textContent = `📅 明日${tomorrowTerm.name}`;
+                alertElement.classList.add('upcoming');
+            } else if (yesterdayTerm) {
+                // 昨天是节气
+                alertElement.textContent = `📅 昨日${yesterdayTerm.name}`;
+                alertElement.classList.add('upcoming');
+            } else {
+                // 显示当前节气
+                const currentTerm = this.getCurrentSolarTerm(date);
+                const season = this.getSeason(date);
+                const seasonName = this.getSeasonName(season);
+                alertElement.textContent = `${currentTerm.name} (${seasonName})`;
+            }
+        }
+    }
+
+    // 获取指定日期的节气（如果在节气期间返回节气对象，否则返回null）
+    getSolarTermForDate(date) {
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+
+        for (const term of this.solarTerms) {
+            if (term.month === month && day >= term.dayRange[0] && day <= term.dayRange[1]) {
+                return term;
+            }
+        }
+        return null;
     }
 
     // 获取节气信息
@@ -451,12 +567,21 @@ class FoodRecommendationApp {
     async generateRecommendation() {
         console.log('=== 开始生成推荐 ===');
 
+        const generateBtn = document.getElementById('generateBtn');
         const resultSection = document.getElementById('resultSection');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const recommendationContent = document.getElementById('recommendationContent');
 
+        // 立即禁用按钮并显示加载状态
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '⏳ 正在生成...';
+        generateBtn.style.opacity = '0.7';
+
         // 显示结果区域
         resultSection.style.display = 'block';
+
+        // 滚动到结果区域
+        resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         // 显示加载动画,包含模型信息
         loadingSpinner.style.display = 'block';
@@ -464,7 +589,7 @@ class FoodRecommendationApp {
             <div class="spinner"></div>
             <p class="loading-text">🤖 正在调用AI模型生成推荐...</p>
             <p class="loading-subtext">尝试模型: GLM-4.7 → GLM-4.6 → GLM-4-Flash</p>
-            <p class="loading-hint">预计需要10-30秒，请耐心等待</p>
+            <p class="loading-hint">⏰ 预计需要10-30秒，请耐心等待</p>
         `;
         recommendationContent.innerHTML = '';
         document.getElementById('nutritionCard').style.display = 'none';
@@ -502,12 +627,25 @@ class FoodRecommendationApp {
             // 隐藏加载动画
             loadingSpinner.style.display = 'none';
 
+            // 恢复按钮状态
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '🌟 饮食推荐';
+            generateBtn.style.opacity = '1';
+
             // 显示推荐结果
             this.displayRecommendation(recommendation);
 
         } catch (error) {
             console.error('生成推荐失败:', error);
+
+            // 隐藏加载动画
             loadingSpinner.style.display = 'none';
+
+            // 恢复按钮状态
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '🌟 饮食推荐';
+            generateBtn.style.opacity = '1';
+
             recommendationContent.innerHTML = `
                 <div class="error-message">
                     ❌ 生成推荐失败: ${error.message}
@@ -825,70 +963,160 @@ class FoodRecommendationApp {
     displayRecommendation(recommendation) {
         const recommendationContent = document.getElementById('recommendationContent');
 
-        // 生成菜品列表HTML（支持新的详细JSON结构）
-        let dishesHtml = '<ul class="dish-list">';
+        // 生成精美的菜品卡片
+        let dishesHtml = '<div class="dish-grid">';
 
         if (recommendation.dishes && recommendation.dishes.length > 0) {
-            recommendation.dishes.forEach(dish => {
-                // 处理食材列表（新旧格式兼容）
-                let ingredientsHtml = '';
+            recommendation.dishes.forEach((dish, index) => {
+                // 获取菜品类型emoji和雅致称谓
+                const typeInfo = {
+                    '汤品': { emoji: '🍲', name: '羹汤', label: '汤' },
+                    '主食': { emoji: '🍚', name: '五谷', label: '饭' },
+                    '热菜': { emoji: '🥘', name: '佳肴', label: '菜' },
+                    '凉菜': { emoji: '🥗', name: '凉碟', label: '凉' },
+                    '甜品': { emoji: '🍮', name: '甜点', label: '点' },
+                    '药膳': { emoji: '🏮', name: '药膳', label: '方' }
+                };
+                const typeData = typeInfo[dish.type] || { emoji: '🍽️', name: '珍馐', label: '馔' };
+
+                // 简化食材显示
+                let ingredientsText = '';
                 if (Array.isArray(dish.ingredients)) {
                     if (typeof dish.ingredients[0] === 'object') {
-                        // 新格式：对象数组
-                        ingredientsHtml = dish.ingredients.map(ing =>
-                            `<li>${ing.item} ${ing.amount} - ${ing.effect}</li>`
-                        ).join('');
+                        ingredientsText = dish.ingredients.map(ing => ing.item).join('、');
                     } else {
-                        // 旧格式：字符串数组
-                        ingredientsHtml = dish.ingredients.map(ing => `<li>${ing}</li>`).join('');
+                        ingredientsText = dish.ingredients.join('、');
                     }
                 }
 
-                // 处理营养信息
-                let nutritionInfo = '';
+                // 简化营养信息 - 使用雅致表述
+                let nutritionBadge = '';
                 if (typeof dish.nutrition === 'object') {
-                    nutritionInfo = `
-                        <p><strong>🔥 热量:</strong> ${dish.nutrition.calories} 大卡</p>
-                        <p><strong>🥩 蛋白质:</strong> ${dish.nutrition.protein}克</p>
-                        <p><strong>🧈 脂肪:</strong> ${dish.nutrition.fat}克</p>
-                        <p><strong>🍞 碳水:</strong> ${dish.nutrition.carbs}克</p>
-                        <p><strong>💡 营养说明:</strong> ${dish.nutrition.description}</p>
-                    `;
-                } else {
-                    nutritionInfo = `<p><strong>💪 营养价值:</strong> ${dish.nutrition}</p>`;
+                    nutritionBadge = `<span class="nutrition-badge">🔥 ${dish.nutrition.calories}大卡</span>`;
                 }
 
+                // 生成菜品类型对应的渐变背景色
+                const gradientColors = this.getTypeGradient(dish.type);
+
                 dishesHtml += `
-                    <li>
-                        <strong>${dish.type ? `[${dish.type}] ` : ''}${dish.name}</strong>
-                        <div style="margin-top: 8px;">
-                            <p><strong>🥘 主要食材:</strong></p>
-                            <ul style="margin-left: 20px; margin-top: 5px;">
-                                ${ingredientsHtml}
-                            </ul>
-                            ${nutritionInfo}
-                            <p><strong>👨‍🍳 制作方法:</strong></p>
-                            <ol style="margin-left: 20px; margin-top: 5px;">
-                                ${Array.isArray(dish.recipe) ? dish.recipe.map(step => `<li>${step}</li>`).join('') : ''}
-                            </ol>
-                            ${dish.suitable ? `<p><strong>👥 适宜人群:</strong> ${dish.suitable}</p>` : ''}
+                    <div class="dish-card">
+                        <div class="dish-main">
+                            <div class="dish-header">
+                                <span class="dish-emoji">${typeData.emoji}</span>
+                                <div class="dish-title-group">
+                                    <h3 class="dish-name">${dish.name}</h3>
+                                    <span class="dish-type-badge-small">${typeData.name}</span>
+                                </div>
+                            </div>
+
+                            <div class="dish-body">
+                                <div class="dish-ingredients">
+                                    <p class="label">🥘 食材</p>
+                                    <p class="value">${ingredientsText}</p>
+                                </div>
+
+                            ${nutritionBadge ? `
+                            <div class="dish-nutrition">
+                                ${nutritionBadge}
+                            </div>
+                            ` : ''}
+
+                            ${dish.suitable ? `
+                            <div class="dish-suitable">
+                                <p class="label">👥 宜食</p>
+                                <p class="value">${dish.suitable}</p>
+                            </div>
+                            ` : ''}
+                            </div>
+
+                            <button class="toggle-recipe" onclick="app.toggleRecipe(${index})">
+                                📜 查看制法
+                            </button>
+
+                            <div class="recipe-content" id="recipe-${index}" style="display: none;">
+                                <div class="recipe-steps">
+                                    ${Array.isArray(dish.recipe) ? dish.recipe.map((step, i) =>
+                                        `<div class="recipe-step"><span class="step-num">${['壹','贰','叁','肆','伍','陆','柒','捌','玖','拾'][i]}</span>${step}</div>`
+                                    ).join('') : ''}
+                                </div>
+                            </div>
                         </div>
-                    </li>
+                    </div>
                 `;
             });
         }
 
-        dishesHtml += '</ul>';
+        dishesHtml += '</div>';
 
-        // 添加专业建议部分
+        // 添加推荐理由 - 使用雅致标题
+        if (recommendation.reasoning) {
+            dishesHtml += `
+                <div class="reasoning-card">
+                    <h3 class="card-title">📜 推荐缘由</h3>
+                    <div class="reasoning-content">
+                        ${recommendation.reasoning.solarTerm ? `
+                        <div class="reason-item">
+                            <span class="reason-icon">🌸</span>
+                            <div>
+                                <p class="reason-label">节气养生</p>
+                                <p class="reason-text">${recommendation.reasoning.solarTerm}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${recommendation.reasoning.season ? `
+                        <div class="reason-item">
+                            <span class="reason-icon">🍂</span>
+                            <div>
+                                <p class="reason-label">四时调养</p>
+                                <p class="reason-text">${recommendation.reasoning.season}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${recommendation.reasoning.weather ? `
+                        <div class="reason-item">
+                            <span class="reason-icon">🌤️</span>
+                            <div>
+                                <p class="reason-label">天时调摄</p>
+                                <p class="reason-text">${recommendation.reasoning.weather}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 添加温馨提示 - 使用雅致标题
         if (recommendation.tips) {
             dishesHtml += `
-                <div class="tips-section" style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 10px;">
-                    <h4 style="margin-bottom: 10px; color: var(--primary-color);">💡 专业建议</h4>
-                    ${recommendation.tips.shopping ? `<p><strong>🛒 食材选购:</strong> ${recommendation.tips.shopping}</p>` : ''}
-                    ${recommendation.tips.cooking ? `<p><strong>🍳 烹饪要点:</strong> ${recommendation.tips.cooking}</p>` : ''}
-                    ${recommendation.tips.pairing ? `<p><strong>🍵 搭配建议:</strong> ${recommendation.tips.pairing}</p>` : ''}
-                    ${recommendation.tips.taboo ? `<p><strong>⚠️ 禁忌提醒:</strong> ${recommendation.tips.taboo}</p>` : ''}
+                <div class="tips-card">
+                    <h3 class="card-title">💊 养生要诀</h3>
+                    <div class="tips-grid">
+                        ${recommendation.tips.shopping ? `
+                        <div class="tip-item">
+                            <span class="tip-icon">🛒</span>
+                            <p>${recommendation.tips.shopping}</p>
+                        </div>
+                        ` : ''}
+                        ${recommendation.tips.cooking ? `
+                        <div class="tip-item">
+                            <span class="tip-icon">🍳</span>
+                            <p>${recommendation.tips.cooking}</p>
+                        </div>
+                        ` : ''}
+                        ${recommendation.tips.pairing ? `
+                        <div class="tip-item">
+                            <span class="tip-icon">🍵</span>
+                            <p>${recommendation.tips.pairing}</p>
+                        </div>
+                        ` : ''}
+                        ${recommendation.tips.taboo ? `
+                        <div class="tip-item">
+                            <span class="tip-icon">⚠️</span>
+                            <p>${recommendation.tips.taboo}</p>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
             `;
         }
@@ -897,6 +1125,108 @@ class FoodRecommendationApp {
 
         // 显示营养分析
         this.displayNutritionChart(recommendation.totalNutrition);
+    }
+
+    // 根据菜名生成搜索关键词
+    // 根据菜品类型获取渐变背景色 - 雅致中国风配色
+    getTypeGradient(dishType) {
+        const gradients = {
+            '汤品': 'linear-gradient(135deg, #b71c1c 0%, #d81b60 100%)',    /* 胭脂红到胭脂 */
+            '主食': 'linear-gradient(135deg, #cfb53b 0%, #fbc02d 100%)',    /* 古金到金黄 */
+            '热菜': 'linear-gradient(135deg, #c2185b 0%, #e91e63 100%)',    /* 海棠红到梅红 */
+            '凉菜': 'linear-gradient(135deg, #2e7d32 0%, #43a047 100%)',    /* 碧玉到翠绿 */
+            '甜品': 'linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%)',    /* 紫藤到紫萝兰 */
+            '药膳': 'linear-gradient(135deg, #8d6e63 0%, #a1887f 100%)',    /* 茶褐到浅褐 */
+            '汤': 'linear-gradient(135deg, #b71c1c 0%, #d81b60 100%)',
+            '饭': 'linear-gradient(135deg, #cfb53b 0%, #fbc02d 100%)',
+            '菜': 'linear-gradient(135deg, #c2185b 0%, #e91e63 100%)',
+            '凉': 'linear-gradient(135deg, #2e7d32 0%, #43a047 100%)',
+            '点': 'linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%)',
+            '方': 'linear-gradient(135deg, #8d6e63 0%, #a1887f 100%)'
+        };
+        return gradients[dishType] || 'linear-gradient(135deg, #006064 0%, #0097a7 100%)'; /* 默认黛蓝色 */
+    }
+
+    getFoodKeywords(dishName, dishType) {
+        // 提取菜名中的关键词
+        const keywords = [];
+
+        // 根据菜品类型添加关键词
+        const typeKeywords = {
+            '汤品': 'soup',
+            '主食': 'rice,noodles',
+            '热菜': 'stir-fry',
+            '凉菜': 'salad',
+            '甜品': 'dessert'
+        };
+
+        if (dishType && typeKeywords[dishType]) {
+            keywords.push(typeKeywords[dishType]);
+        }
+
+        // 从菜名中提取关键词
+        const nameLower = dishName.toLowerCase();
+
+        // 常见食材关键词
+        const foodItems = {
+            '鸡': 'chicken',
+            '鸭': 'duck',
+            '鱼': 'fish',
+            '虾': 'shrimp',
+            '牛': 'beef',
+            '羊': 'lamb',
+            '猪肉': 'pork',
+            '蛋': 'egg',
+            '豆腐': 'tofu',
+            '青菜': 'vegetables',
+            '萝卜': 'radish',
+            '冬瓜': 'winter melon',
+            '南瓜': 'pumpkin',
+            '土豆': 'potato',
+            '西红柿': 'tomato',
+            '黄瓜': 'cucumber',
+            '茄子': 'eggplant',
+            '辣椒': 'pepper',
+            '蘑菇': 'mushroom',
+            '木耳': 'fungus',
+            '莲藕': 'lotus root',
+            '菠菜': 'spinach',
+            '白菜': 'cabbage',
+            '韭菜': 'chives',
+            '芹菜': 'celery',
+            '山药': 'yam',
+            '粥': 'porridge',
+            '面': 'noodles',
+            '饭': 'rice'
+        };
+
+        for (const [chinese, english] of Object.entries(foodItems)) {
+            if (dishName.includes(chinese)) {
+                keywords.push(english);
+            }
+        }
+
+        // 如果没有找到特定关键词,使用通用词
+        if (keywords.length === 0) {
+            keywords.push('chinese food', 'asian food');
+        }
+
+        // 限制关键词数量
+        return keywords.slice(0, 3).join(',');
+    }
+
+    // 切换制作方法显示
+    toggleRecipe(index) {
+        const recipeContent = document.getElementById(`recipe-${index}`);
+        const button = recipeContent.previousElementSibling;
+
+        if (recipeContent.style.display === 'none') {
+            recipeContent.style.display = 'block';
+            button.textContent = '🔼 收起制法';
+        } else {
+            recipeContent.style.display = 'none';
+            button.textContent = '📜 查看制法';
+        }
     }
 
     // 显示营养分析图表
