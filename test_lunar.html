@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>测试lunar库</title>
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
+</head>
+<body>
+    <h1>lunar-javascript库测试</h1>
+    <div id="result"></div>
+
+    <script>
+        const testDate = new Date(2026, 0, 5); // 2026年1月5日
+        const resultDiv = document.getElementById('result');
+
+        let html = '<h2>测试日期: 2026年1月5日</h2>';
+        html += '<p><strong>预期结果:</strong> 乙巳年 冬月十七 (十一月十七)</p>';
+
+        try {
+            // 使用lunar库
+            const solar = Solar.fromDate(testDate);
+            const lunar = solar.getLunar();
+
+            html += '<h3>lunar库计算结果:</h3>';
+            html += `<ul>`;
+            html += `<li>农历年: ${lunar.getYear()}</li>`;
+            html += `<li>农历月: ${lunar.getMonth()}</li>`;
+            html += `<li>农历日: ${lunar.getDay()}</li>`;
+            html += `<li>闰月: ${lunar.getLeapMonth()}</li>`;
+            html += `</ul>`;
+
+            // 获取月份名称
+            const lunarMonthNames = [
+                '正月', '二月', '三月', '四月', '五月', '六月',
+                '七月', '八月', '九月', '十月', '冬月', '腊月'
+            ];
+
+            let monthDisplay = lunarMonthNames[lunar.getMonth() - 1];
+            if (lunar.getLeapMonth() === lunar.getMonth()) {
+                monthDisplay = '闰' + monthDisplay;
+            }
+
+            const lunarDayNames = [
+                '初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+                '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+                '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'
+            ];
+
+            const result = `${lunar.getYear()}年${monthDisplay}${lunarDayNames[lunar.getDay() - 1]}`;
+            html += `<h3>最终结果: ${result}</h3>`;
+
+            // 八字
+            const eightChar = lunar.getEightChar();
+            html += '<h3>天干地支:</h3>';
+            html += `<ul>`;
+            html += `<li>年: ${eightChar.getYear()}</li>`;
+            html += `<li>月: ${eightChar.getMonth()}</li>`;
+            html += `<li>日: ${eightChar.getDay()}</li>`;
+            html += `</ul>`;
+
+            // 验证是否正确
+            const isCorrect = (result === '2025年冬月十七' || result === '2026年冬月十七');
+            html += `<p><strong>${isCorrect ? '✅ 计算正确!' : '❌ 计算错误!'}</strong></p>`;
+
+        } catch (error) {
+            html += `<p style="color: red;">错误: ${error.message}</p>`;
+            html += '<p>Solar对象不可用,请检查lunar库是否正确加载</p>';
+        }
+
+        resultDiv.innerHTML = html;
+    </script>
+</body>
+</html>

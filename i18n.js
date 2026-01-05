@@ -15,9 +15,9 @@ const i18n = {
             'section.result': '📜 养生良方',
 
             // 标签
-            'label.date': '黄历',
+            'label.date': '公历',
             'label.time': '时辰',
-            'label.location': '天地',
+            'label.location': '地域',
             'label.weather': '天候',
 
             // 按钮
@@ -279,10 +279,10 @@ const i18n = {
             el.textContent = translation;
         });
 
-        // 更新语言切换按钮
+        // 更新语言切换按钮 - 只显示图标
         const langBtn = document.getElementById('langToggleBtn');
         if (langBtn) {
-            langBtn.textContent = this.currentLang === 'zh' ? '🌐 中文' : '🌐 English';
+            langBtn.textContent = '🌐';
         }
 
         // 更新位置下拉选项

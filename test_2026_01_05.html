@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>测试2026年1月5日18时</title>
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
+</head>
+<body>
+    <h1>测试 2026年1月5日 18:00</h1>
+    <div id="result"></div>
+
+    <script>
+        const testDate = new Date(2026, 0, 5, 18, 0); // 2026年1月5日 18:00
+        const resultDiv = document.getElementById('result');
+
+        let html = '<h2>输入: 2026年1月5日 18:00 (应该是酉时)</h2>';
+
+        // 预期结果
+        html += '<h3>预期结果(根据万年历):</h3>';
+        html += '<ul>';
+        html += '<li>年柱: 丙午 (马年)</li>';
+        html += '<li>月柱: 己丑月</li>';
+        html += '<li>日柱: 癸酉日 或 己卯日 (不同网站有差异)</li>';
+        html += '<li>时柱: 辛酉时 (18:00是酉时)</li>';
+        html += '<li>农历: 二〇二五年冬月十七</li>';
+        html += '</ul>';
+
+        try {
+            const solar = Solar.fromDate(testDate);
+            const lunar = solar.getLunar();
+            const eightChar = lunar.getEightChar();
+
+            html += '<h3>lunar库计算结果:</h3>';
+            html += '<ul>';
+            html += `<li>年柱: ${eightChar.getYear()}</li>`;
+            html += `<li>月柱: ${eightChar.getMonth()}</li>`;
+            html += `<li>日柱: ${eightChar.getDay()}</li>`;
+            html += `<li>时柱(18点): ${eightChar.getTime(18)}</li>`;
+            html += `<li>农历: ${lunar.toString()}</li>';
+            html += `<li>时辰地支(18点): ${lunar.getTimeZhi(18)}</li>`;
+            html += `<li>生肖: ${lunar.getYearShengXiao()}</li>`;
+            html += '</ul>';
+
+            // 验证
+            html += '<h3>验证:</h3>';
+            const yearMatch = eightChar.getYear() === '丙午' ? '✅ 年柱正确' : '❌ 年柱错误';
+            const hourMatch = lunar.getTimeZhi(18) === '酉' ? '✅ 时辰正确' : '❌ 时辰错误';
+            const lunarMatch = lunar.toString().includes('冬月十七') ? '✅ 农历正确' : '❌ 农历错误';
+
+            html += `<p>${yearMatch}</p>`;
+            html += `<p>${hourMatch}</p>`;
+            html += `<p>${lunarMatch}</p>`;
+
+        } catch (error) {
+            html += `<p style="color: red;">错误: ${error.message}</p>`;
+        }
+
+        resultDiv.innerHTML = html;
+    </script>
+</body>
+</html>

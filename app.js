@@ -1,15 +1,6 @@
-// 农历和节气计算工具类
+// 农历和节气计算工具类 - 使用lunar-javascript库
 class ChineseCalendar {
     constructor() {
-        // 1900-2100年农历数据表（压缩格式）
-        // 每个元素：[闰月月份(0=无闰月), 闰月天数, 1月天数, 2月天数, ..., 12月天数]
-        this.lunarInfo = [
-            [0,0,29,30,29,29,30,29,30,29,30,29,30,29,30], // 1900
-            [0,0,30,29,30,29,29,30,29,30,29,30,29,30,29], // 1901
-            // ... 省略中间数据，使用简化算法
-            [0,0,29,30,29,29,30,29,30,29,30,29,30,29,30]  // 示例数据
-        ];
-
         // 24节气的儒略日（ approximate 1900-2100）
         // 格式：[月, 日范围]
         this.solarTerms = [
@@ -40,58 +31,87 @@ class ChineseCalendar {
         ];
     }
 
-    // 公历转农历（简化算法）
+    // 公历转农历 - 使用lunar-javascript库
     solarToLunar(solarDate) {
-        const year = solarDate.getFullYear();
-        const month = solarDate.getMonth() + 1;
-        const day = solarDate.getDate();
+        try {
+            // 使用lunar库进行转换
+            const solar = Solar.fromDate(solarDate);
+            const lunar = solar.getLunar();
 
-        // 简化计算：基于基准日期推算
-        // 基准：2024年1月11日 = 农历2023年十二月初一
+            const year = lunar.getYear();
+            const month = lunar.getMonth();
+            const day = lunar.getDay();
+
+            // 使用lunar库内置的方法获取完整的农历字符串
+            // 格式: 一九八六年四月廿一
+            const lunarString = lunar.toString(); // 例如: 二〇二五年冬月十七
+            const lunarStringShort = lunar.toFullString().split(' ')[0]; // 只取年月日部分
+
+            // 解析lunar库返回的字符串格式
+            // lunar.toString() 返回如: "二〇二五年冬月十七"
+            const display = lunarString;
+
+            return {
+                year: year,
+                month: month,
+                day: day,
+                display: display
+            };
+        } catch (error) {
+            console.error('农历转换错误:', error);
+            // 降级到简化算法
+            return this.fallbackSolarToLunar(solarDate);
+        }
+    }
+
+    // 降级算法(当lunar库不可用时)
+    fallbackSolarToLunar(solarDate) {
+        // 基准日期：2024年1月11日 = 农历2023年腊月初一
         const baseDate = new Date(2024, 0, 11);
         const baseLunarYear = 2023;
         const baseLunarMonth = 12;
         const baseLunarDay = 1;
 
-        const diffTime = solarDate - baseDate;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        // 粗略估算农历（平均每月29.53天）
-        const lunarMonthDays = 29.53;
-        let totalLunarDays = diffDays;
+        const diffDays = Math.floor((solarDate - baseDate) / (1000 * 60 * 60 * 24));
 
         let lunarYear = baseLunarYear;
         let lunarMonth = baseLunarMonth;
-        let lunarDay = baseLunarDay + totalLunarDays;
+        let lunarDay = baseLunarDay + diffDays;
 
-        // 调整月份和年份
-        while (lunarDay > 30) {
-            lunarMonth++;
-            if (lunarMonth > 12) {
-                lunarMonth = 1;
-                lunarYear++;
-            }
-            lunarDay -= 30;
-        }
-
-        // 农历月份名称
         const lunarMonthNames = [
             '正月', '二月', '三月', '四月', '五月', '六月',
             '七月', '八月', '九月', '十月', '冬月', '腊月'
         ];
 
-        // 日期名称
         const lunarDayNames = [
             '初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
             '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
             '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'
         ];
 
+        while (lunarDay > 30) {
+            const daysInMonth = (lunarMonth % 2 === 1) ? 30 : 29;
+            if (lunarDay > daysInMonth) {
+                lunarDay -= daysInMonth;
+                lunarMonth++;
+                if (lunarMonth > 12) {
+                    lunarMonth = 1;
+                    lunarYear++;
+                }
+            } else {
+                break;
+            }
+        }
+
+        let dayIndex = lunarDay - 1;
+        if (dayIndex < 0) dayIndex = 0;
+        if (dayIndex >= lunarDayNames.length) dayIndex = lunarDayNames.length - 1;
+
         return {
             year: lunarYear,
             month: lunarMonth,
             day: lunarDay,
-            display: `${lunarYear}年${lunarMonthNames[lunarMonth - 1]}${lunarDayNames[lunarDay - 1]}`
+            display: `${lunarYear}年${lunarMonthNames[lunarMonth - 1]}${lunarDayNames[dayIndex]}`
         };
     }
 
@@ -135,34 +155,73 @@ class ChineseCalendar {
         return currentTerm && currentTerm.name === termName;
     }
 
-    // 计算天干地支
+    // 计算天干地支 - 使用lunar-javascript库
     calculateGanzhi(date, hours, minutes) {
+        try {
+            // 使用lunar库进行计算
+            const solar = Solar.fromDate(date);
+            const lunar = solar.getLunar();
+
+            // 获取八字(四柱)
+            const eightChar = lunar.getEightChar();
+            const yearGanzhi = eightChar.getYear();
+            const monthGanzhi = eightChar.getMonth();
+            const dayGanzhi = eightChar.getDay();
+            const hourGanzhi = eightChar.getTime(hours);
+
+            // 时辰名称 - 使用lunar库的getTimeZhi获取地支
+            const shichenZhi = lunar.getTimeZhi(hours); // 返回地支,如"子"
+            const shichen = shichenZhi + '时'; // 组合成"子时"
+
+            const zodiacAnimals = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+            const zodiac = lunar.getYearShengXiao();
+
+            return {
+                year: yearGanzhi + '年',
+                month: monthGanzhi + '月',
+                day: dayGanzhi + '日',
+                hour: hourGanzhi + '时',
+                shichen: shichen,
+                zodiac: zodiac,
+                display: `${yearGanzhi}年 ${monthGanzhi}月 ${dayGanzhi}日 ${hourGanzhi}时 (${shichen} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')})`
+            };
+        } catch (error) {
+            console.error('天干地支计算错误:', error);
+            // 降级到简化算法
+            return this.fallbackCalculateGanzhi(date, hours, minutes);
+        }
+    }
+
+    // 降级算法(当lunar库不可用时)
+    fallbackCalculateGanzhi(date, hours, minutes) {
         const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
         const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
         const zodiacAnimals = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
 
-        // 年干支
+        // 年干支 - 以立春为界(立春大约在2月4日)
         const year = date.getFullYear();
-        const lunarYear = year; // 简化：直接使用公历年份
-        const yearStemIndex = (lunarYear - 4) % 10;
-        const yearBranchIndex = (lunarYear - 4) % 12;
+        const isBeforeLichun = (date.getMonth() === 0) ||
+                               (date.getMonth() === 1 && date.getDate() < 4);
+        const ganzhiYear = isBeforeLichun ? year - 1 : year;
 
-        // 月干支（简化）
+        const yearStemIndex = ((ganzhiYear - 4) % 10 + 10) % 10;
+        const yearBranchIndex = ((ganzhiYear - 4) % 12 + 12) % 12;
+
+        // 月干支
         const month = date.getMonth() + 1;
-        const monthStemIndex = ((lunarYear % 10) * 2 + (month - 1) % 12) % 10;
         const monthBranchIndex = (month + 1) % 12;
+        const monthStemIndex = ((yearStemIndex * 2 + month) % 10 + 10) % 10;
 
-        // 日干支（基准：1900年1月1日 = 甲戌日）
-        const baseDate = new Date(1900, 0, 1);
+        // 日干支（基准：1949年10月1日 = 甲子日）
+        const baseDate = new Date(1949, 9, 1);
         const daysDiff = Math.floor((date - baseDate) / (1000 * 60 * 60 * 24));
-        const dayStemIndex = (0 + daysDiff) % 10;
-        const dayBranchIndex = (10 + daysDiff) % 12;
+        const dayStemIndex = ((0 + daysDiff) % 10 + 10) % 10;
+        const dayBranchIndex = ((0 + daysDiff) % 12 + 12) % 12;
 
         // 时干支
         const hourBranchIndex = Math.floor((hours + 1) / 2) % 12;
-        const hourStemIndex = (dayStemIndex * 2 + Math.floor((hours + 1) / 2)) % 10;
+        const hourStemIndex = ((dayStemIndex * 2 + hourBranchIndex) % 10 + 10) % 10;
 
-        // 时辰名称
         const shichenNames = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时',
                               '午时', '未时', '申时', '酉时', '戌时', '亥时'];
         const shichen = shichenNames[hourBranchIndex];
@@ -304,10 +363,15 @@ class FoodRecommendationApp {
             this.updateSolarTermDisplay(); // 更新节气显示
         });
 
-        // 日期变化时更新节气显示
+        // 日期变化时更新天干地支、农历、节气和季节背景
         document.getElementById('dateInput').addEventListener('change', () => {
             this.updateSolarTermDisplay();
             this.detectAndSetSeason();
+        });
+
+        // 时间变化时更新天干地支、时辰、农历和节气
+        document.getElementById('timeInput').addEventListener('change', () => {
+            this.updateSolarTermDisplay();
         });
 
         // 生成推荐按钮
@@ -645,8 +709,8 @@ class FoodRecommendationApp {
         // 检查前后两天是否是节气
         const isSolarTermPeriod = this.isNearSolarTerm(today);
 
-        // 获取当前节气名称
-        const solarTerm = this.chineseCalendar.getCurrentSolarTerm(date);
+        // 获取当前或附近的节气名称
+        const solarTerm = this.getNearbySolarTerm(today);
         const solarTermName = solarTerm ? solarTerm.name : '';
 
         // 添加或移除特殊的节气样式类
@@ -656,6 +720,14 @@ class FoodRecommendationApp {
         // 设置节气名称到data属性,用于CSS选择器
         if (solarTermName) {
             bodyElement.setAttribute('data-solar-term', solarTermName);
+
+            // 设置节气背景图
+            this.setSolarTermBackground(solarTermName, appContainer);
+        } else {
+            // 没有节气时移除背景图
+            if (appContainer) {
+                appContainer.style.backgroundImage = 'none';
+            }
         }
 
         if (isSolarTermPeriod) {
@@ -668,6 +740,113 @@ class FoodRecommendationApp {
             if (appContainer) {
                 appContainer.classList.remove('is-solar-term-day');
             }
+        }
+    }
+
+    // 获取附近的节气（今天、昨天或明天）
+    getNearbySolarTerm(date) {
+        const today = new Date(date);
+        const tomorrow = new Date(date);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const yesterday = new Date(date);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        // 优先返回今天的节气
+        const todayTerm = this.getSolarTermForDate(today);
+        if (todayTerm) return todayTerm;
+
+        // 其次返回明天的节气
+        const tomorrowTerm = this.getSolarTermForDate(tomorrow);
+        if (tomorrowTerm) return tomorrowTerm;
+
+        // 最后返回昨天的节气
+        const yesterdayTerm = this.getSolarTermForDate(yesterday);
+        if (yesterdayTerm) return yesterdayTerm;
+
+        return null;
+    }
+
+    // 检测传统节日
+    getTraditionalFestival(date) {
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+
+        // 传统节日数据（农历和公历）
+        const festivals = [
+            // 春节（农历正月初一）- 简化为公历1月下旬到2月中旬
+            { name: '春节', month: 1, dayRange: [[21, 31], [1, 15]], image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1920&q=80' },
+            // 元宵节（农历正月十五）- 简化为公历2月
+            { name: '元宵节', month: 2, dayRange: [[1, 28]], image: 'https://images.unsplash.com/photo-1518176258769-f227c798150e?w=1920&q=80' },
+            // 清明节（公历4月4-6日）
+            { name: '清明节', month: 4, dayRange: [[4, 6]], image: 'https://images.unsplash.com/photo-1527525443983-6e60c75fff46?w=1920&q=80' },
+            // 端午节（农历五月初五）- 简化为公历6月
+            { name: '端午节', month: 6, dayRange: [[1, 30]], image: 'https://images.unsplash.com/photo-1533565406508-97d5cc661319?w=1920&q=80' },
+            // 七夕节（农历七月初七）- 简化为公历8月
+            { name: '七夕节', month: 8, dayRange: [[1, 31]], image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80' },
+            // 中秋节（农历八月十五）- 简化为公历9月
+            { name: '中秋节', month: 9, dayRange: [[1, 30]], image: 'https://images.unsplash.com/photo-1507652313519-d4e9174996cd?w=1920&q=80' },
+            // 重阳节（农历九月初九）- 简化为公历10月
+            { name: '重阳节', month: 10, dayRange: [[1, 31]], image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80' },
+            // 冬至（公历12月21-23日）
+            { name: '冬至', month: 12, dayRange: [[21, 23]], image: 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1920&q=80' },
+            // 除夕（农历腊月三十）- 简化为公历1月或2月
+            { name: '除夕', month: 1, dayRange: [[20, 31]], image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1920&q=80' },
+            { name: '除夕', month: 2, dayRange: [[1, 10]], image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1920&q=80' }
+        ];
+
+        // 检查是否在节日范围内
+        for (const festival of festivals) {
+            if (festival.month === month) {
+                for (const range of festival.dayRange) {
+                    if (day >= range[0] && day <= range[1]) {
+                        return festival;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // 设置节气背景图
+    setSolarTermBackground(solarTermName, container) {
+        if (!container) return;
+
+        // 24节气背景图URL（使用Unsplash等免费图库）
+        const solarTermImages = {
+            '立春': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80', // 春天发芽
+            '雨水': 'https://images.unsplash.com/photo-1518173946687-a4c036bc6c9f?w=1920&q=80', // 春雨
+            '惊蛰': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80', // 春雷山景
+            '春分': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80', // 春季花朵
+            '清明': 'https://images.unsplash.com/photo-1527525443983-6e60c75fff46?w=1920&q=80', // 清明绿意
+            '谷雨': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80', // 谷雨田园
+            '立夏': 'https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=1920&q=80', // 初夏阳光
+            '小满': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1920&q=80', // 麦田
+            '芒种': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80', // 农耕
+            '夏至': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80', // 夏日绿野
+            '小暑': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80', // 夏日荷塘
+            '大暑': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80', // 盛夏海滩
+            '立秋': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80', // 初秋山景
+            '处暑': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1920&q=80', // 夏末秋初
+            '白露': 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=80', // 秋露
+            '秋分': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80', // 秋分金黄
+            '寒露': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80', // 深秋
+            '霜降': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80', // 霜秋
+            '立冬': 'https://images.unsplash.com/photo-1483664852095-d6cc6870705d?w=1920&q=80', // 初冬
+            '小雪': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=1920&q=80', // 小雪
+            '大雪': 'https://images.unsplash.com/photo-1483347752404-cbf69f21f402?w=1920&q=80', // 大雪
+            '冬至': 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1920&q=80', // 冬至雪景
+            '小寒': 'https://images.unsplash.com/photo-1518182170546-0764ce7c6a6a?w=1920&q=80', // 小寒
+            '大寒': 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?w=1920&q=80'  // 大寒
+        };
+
+        const imageUrl = solarTermImages[solarTermName];
+        if (imageUrl) {
+            container.style.backgroundImage = `url('${imageUrl}')`;
+            container.style.backgroundSize = 'cover';
+            container.style.backgroundPosition = 'center';
+            container.style.backgroundAttachment = 'fixed';
+            container.style.transition = 'background-image 0.5s ease';
         }
     }
 

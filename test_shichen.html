@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>测试时辰计算</title>
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
+</head>
+<body>
+    <h1>时辰计算测试</h1>
+    <div id="result"></div>
+
+    <script>
+        const now = new Date(); // 当前时间
+        const resultDiv = document.getElementById('result');
+
+        let html = `<h2>当前时间: ${now.toLocaleString('zh-CN')}</h2>`;
+        html += `<p>当前小时: ${now.getHours()}</p>`;
+
+        // 时辰对照表
+        const shichenMap = {
+            '子': [23, 0, 1],   // 23:00-01:00
+            '丑': [1, 2, 3],     // 01:00-03:00
+            '寅': [3, 4, 5],     // 03:00-05:00
+            '卯': [5, 6, 7],     // 05:00-07:00
+            '辰': [7, 8, 9],     // 07:00-09:00
+            '巳': [9, 10, 11],   // 09:00-11:00
+            '午': [11, 12, 13],  // 11:00-13:00
+            '未': [13, 14, 15],  // 13:00-15:00
+            '申': [15, 16, 17],  // 15:00-17:00
+            '酉': [17, 18, 19],  // 17:00-19:00
+            '戌': [19, 20, 21],  // 19:00-21:00
+            '亥': [21, 22, 23]   // 21:00-23:00
+        };
+
+        html += '<h3>时辰对照表:</h3><table border="1"><tr><th>时辰</th><th>时间范围</th></tr>';
+        for (let [name, hours] of Object.entries(shichenMap)) {
+            html += `<tr><td>${name}时</td><td>${hours[0]}:00 - ${hours[2]}:59</td></tr>`;
+        }
+        html += '</table>';
+
+        try {
+            const solar = Solar.fromDate(now);
+            const lunar = solar.getLunar();
+            const eightChar = lunar.getEightChar();
+
+            html += '<h3>lunar库计算结果:</h3>';
+            html += `<ul>`;
+            html += `<li>年柱: ${eightChar.getYear()}</li>`;
+            html += `<li>月柱: ${eightChar.getMonth()}</li>`;
+            html += `<li>日柱: ${eightChar.getDay()}</li>`;
+            html += `<li>时柱: ${eightChar.getTime(now.getHours())}</li>`;
+            html += `</ul>`;
+
+            // 获取时辰地支
+            const timeZhi = lunar.getTimeZhi(now.getHours());
+            html += `<p><strong>时辰地支: ${timeZhi}</strong></p>`;
+
+            // 验证当前小时对应的时辰
+            const currentHour = now.getHours();
+            html += '<h3>当前时辰验证:</h3>';
+
+            for (let [name, hours] of Object.entries(shichenMap)) {
+                if (hours.includes(currentHour)) {
+                    html += `<p style="color: green; font-size: 20px;">
+                        当前${currentHour}点应该是 <strong>${name}时</strong>
+                    </p>`;
+                    break;
+                }
+            }
+
+        } catch (error) {
+            html += `<p style="color: red;">错误: ${error.message}</p>`;
+        }
+
+        resultDiv.innerHTML = html;
+    </script>
+</body>
+</html>

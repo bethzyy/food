@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天干地支和农历计算测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>天干地支和农历计算测试工具</h1>
+
+    <div class="test-section">
+        <h2>测试1: 天干地支计算</h2>
+        <input type="date" id="testDate">
+        <input type="time" id="testTime" value="12:00">
+        <button onclick="testGanzhi()">测试天干地支</button>
+        <div id="ganzhiResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试2: 农历计算</h2>
+        <input type="date" id="lunarTestDate">
+        <button onclick="testLunar()">测试农历</button>
+        <div id="lunarResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试3: 已知日期验证</h2>
+        <button onclick="runKnownTests()">运行已知日期测试</button>
+        <div id="knownTestsResult" class="result"></div>
+    </div>
+
+    <script>
+        // 天干地支计算
+        function calculateGanzhi(date, hours) {
+            const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+            const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+            const year = date.getFullYear();
+
+            // 年干支 - 以立春为界(立春大约在2月4日)
+            // 1月和2月1-3日用上一年,2月4日起用新的一年
+            const isBeforeLichun = (date.getMonth() === 0) ||
+                                   (date.getMonth() === 1 && date.getDate() < 4);
+            const ganzhiYear = isBeforeLichun ? year - 1 : year;
+
+            const yearStemIndex = ((ganzhiYear - 4) % 10 + 10) % 10;
+            const yearBranchIndex = ((ganzhiYear - 4) % 12 + 12) % 12;
+
+            // 月干支
+            const month = date.getMonth() + 1;
+            const monthBranchIndex = (month + 1) % 12;
+            const monthStemIndex = ((yearStemIndex * 2 + month) % 10 + 10) % 10;
+
+            // 日干支 - 1949年10月1日是甲子日
+            // 根据国家标准《农历的编算和颁行》,1949年10月1日是甲子日
+            const baseDate = new Date(1949, 9, 1);
+            const daysDiff = Math.floor((date - baseDate) / (1000 * 60 * 60 * 24));
+            const dayStemIndex = ((0 + daysDiff) % 10 + 10) % 10;
+            const dayBranchIndex = ((0 + daysDiff) % 12 + 12) % 12;
+
+            // 时干支
+            const hourBranchIndex = Math.floor((hours + 1) / 2) % 12;
+            const hourStemIndex = ((dayStemIndex * 2 + hourBranchIndex) % 10 + 10) % 10;
+
+            return {
+                year: `${heavenlyStems[yearStemIndex]}${earthlyBranches[yearBranchIndex]}年`,
+                month: `${heavenlyStems[monthStemIndex]}${earthlyBranches[monthBranchIndex]}月`,
+                day: `${heavenlyStems[dayStemIndex]}${earthlyBranches[dayBranchIndex]}日`,
+                hour: `${heavenlyStems[hourStemIndex]}${earthlyBranches[hourBranchIndex]}时`,
+                yearStem: heavenlyStems[yearStemIndex],
+                yearBranch: earthlyBranches[yearBranchIndex],
+                monthStem: heavenlyStems[monthStemIndex],
+                monthBranch: earthlyBranches[monthBranchIndex],
+                dayStem: heavenlyStems[dayStemIndex],
+                dayBranch: earthlyBranches[dayBranchIndex],
+                hourStem: heavenlyStems[hourStemIndex],
+                hourBranch: earthlyBranches[hourBranchIndex]
+            };
+        }
+
+        // 简化农历计算
+        function solarToLunar(date) {
+            // 基准：2024年1月11日 = 农历2023年腊月初一
+            const baseDate = new Date(2024, 0, 11);
+            const baseLunarYear = 2023;
+            const baseLunarMonth = 12;
+            const baseLunarDay = 1;
+
+            const diffTime = date - baseDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            let lunarYear = baseLunarYear;
+            let lunarMonth = baseLunarMonth;
+            let lunarDay = baseLunarDay + diffDays;
+
+            // 简化：农历月大月30天，小月29天
+            while (lunarDay > 30) {
+                const daysInMonth = (lunarMonth % 2 === 1) ? 30 : 29;
+                if (lunarDay > daysInMonth) {
+                    lunarDay -= daysInMonth;
+                    lunarMonth++;
+                    if (lunarMonth > 12) {
+                        lunarMonth = 1;
+                        lunarYear++;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            const lunarMonthNames = [
+                '正月', '二月', '三月', '四月', '五月', '六月',
+                '七月', '八月', '九月', '十月', '冬月', '腊月'
+            ];
+
+            const lunarDayNames = [
+                '初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+                '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+                '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'
+            ];
+
+            return {
+                year: lunarYear,
+                month: lunarMonth,
+                day: lunarDay,
+                display: `${lunarYear}年${lunarMonthNames[lunarMonth - 1]}${lunarDayNames[lunarDay - 1]}`
+            };
+        }
+
+        function testGanzhi() {
+            const dateInput = document.getElementById('testDate').value;
+            const timeInput = document.getElementById('testTime').value;
+
+            if (!dateInput) {
+                alert('请选择日期');
+                return;
+            }
+
+            const date = new Date(dateInput);
+            const hours = parseInt(timeInput.split(':')[0]);
+
+            const ganzhi = calculateGanzhi(date, hours);
+
+            document.getElementById('ganzhiResult').innerHTML = `
+                <strong>公历日期：</strong>${dateInput} ${timeInput}<br>
+                <strong>年干支：</strong>${ganzhi.year}<br>
+                <strong>月干支：</strong>${ganzhi.month}<br>
+                <strong>日干支：</strong>${ganzhi.day}<br>
+                <strong>时干支：</strong>${ganzhi.hour}<br>
+                <br>
+                <strong>详细：</strong><br>
+                年干：${ganzhi.yearStem} 年支：${ganzhi.yearBranch}<br>
+                月干：${ganzhi.monthStem} 月支：${ganzhi.monthBranch}<br>
+                日干：${ganzhi.dayStem} 日支：${ganzhi.dayBranch}<br>
+                时干：${ganzhi.hourStem} 时支：${ganzhi.hourBranch}
+            `;
+        }
+
+        function testLunar() {
+            const dateInput = document.getElementById('lunarTestDate').value;
+
+            if (!dateInput) {
+                alert('请选择日期');
+                return;
+            }
+
+            const date = new Date(dateInput);
+            const lunar = solarToLunar(date);
+
+            document.getElementById('lunarResult').innerHTML = `
+                <strong>公历日期：</strong>${dateInput}<br>
+                <strong>农历日期：</strong>${lunar.display}<br>
+                <strong>详细信息：</strong>${lunar.year}年 ${lunar.month}月 ${lunar.day}日
+            `;
+        }
+
+        function runKnownTests() {
+            const tests = [
+                {
+                    date: '2024-01-11',
+                    expectedLunar: '2023年腊月初一',
+                    expectedGanzhi: '甲辰年',  // 2024年是甲辰龙年
+                    description: '基准日期：2024年1月11日 = 农历2023年腊月初一'
+                },
+                {
+                    date: '2024-02-10',
+                    expectedLunar: '2024年正月初一',
+                    expectedGanzhi: '甲辰年',
+                    description: '2024年春节（大概）'
+                },
+                {
+                    date: '2024-06-10',
+                    expectedGanzhi: '甲辰年',
+                    description: '端午节（大概）'
+                },
+                {
+                    date: '2024-09-17',
+                    expectedGanzhi: '甲辰年',
+                    description: '中秋节（大概）'
+                },
+                {
+                    date: '2025-01-05',
+                    expectedGanzhi: '甲辰年',  // 2025年1月还是甲辰年(春节前)
+                    description: '2025年1月5日(小寒)-春节前还是甲辰年'
+                }
+            ];
+
+            let results = '';
+
+            tests.forEach(test => {
+                const date = new Date(test.date);
+                const ganzhi = calculateGanzhi(date, 12);
+                const lunar = solarToLunar(date);
+
+                const yearMatch = test.expectedGanzhi && ganzhi.year === test.expectedGanzhi ? '✅' : '❌';
+                const lunarMatch = test.expectedLunar && lunar.display.includes(test.expectedLunar.substring(5)) ? '✅' : '❌';
+
+                results += `
+                    <div style="margin: 15px 0; padding: 10px; border-left: 3px solid #007bff;">
+                        <strong>${test.description}</strong><br>
+                        日期：${test.date}<br>
+                        天干地支：${ganzhi.year} ${ganzhi.month} ${ganzhi.day} ${yearMatch}<br>
+                        农历：${lunar.display} ${lunarMatch ? '✅' : ''}<br>
+                        ${test.expectedLunar ? `预期农历：${test.expectedLunar} ${lunarMatch}` : ''}
+                    </div>
+                `;
+            });
+
+            document.getElementById('knownTestsResult').innerHTML = results;
+        }
+
+        // 页面加载时设置默认日期
+        window.onload = function() {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('testDate').value = dateStr;
+            document.getElementById('lunarTestDate').value = dateStr;
+        };
+    </script>
+</body>
+</html>
