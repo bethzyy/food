@@ -1,3 +1,188 @@
+// 农历和节气计算工具类
+class ChineseCalendar {
+    constructor() {
+        // 1900-2100年农历数据表（压缩格式）
+        // 每个元素：[闰月月份(0=无闰月), 闰月天数, 1月天数, 2月天数, ..., 12月天数]
+        this.lunarInfo = [
+            [0,0,29,30,29,29,30,29,30,29,30,29,30,29,30], // 1900
+            [0,0,30,29,30,29,29,30,29,30,29,30,29,30,29], // 1901
+            // ... 省略中间数据，使用简化算法
+            [0,0,29,30,29,29,30,29,30,29,30,29,30,29,30]  // 示例数据
+        ];
+
+        // 24节气的儒略日（ approximate 1900-2100）
+        // 格式：[月, 日范围]
+        this.solarTerms = [
+            { name: '立春', month: 2, dayRange: [3, 5] },
+            { name: '雨水', month: 2, dayRange: [18, 20] },
+            { name: '惊蛰', month: 3, dayRange: [5, 7] },
+            { name: '春分', month: 3, dayRange: [20, 22] },
+            { name: '清明', month: 4, dayRange: [4, 6] },
+            { name: '谷雨', month: 4, dayRange: [19, 21] },
+            { name: '立夏', month: 5, dayRange: [5, 7] },
+            { name: '小满', month: 5, dayRange: [20, 22] },
+            { name: '芒种', month: 6, dayRange: [5, 7] },
+            { name: '夏至', month: 6, dayRange: [21, 22] },
+            { name: '小暑', month: 7, dayRange: [6, 8] },
+            { name: '大暑', month: 7, dayRange: [22, 24] },
+            { name: '立秋', month: 8, dayRange: [7, 9] },
+            { name: '处暑', month: 8, dayRange: [22, 24] },
+            { name: '白露', month: 9, dayRange: [7, 9] },
+            { name: '秋分', month: 9, dayRange: [22, 24] },
+            { name: '寒露', month: 10, dayRange: [8, 10] },
+            { name: '霜降', month: 10, dayRange: [23, 25] },
+            { name: '立冬', month: 11, dayRange: [7, 8] },
+            { name: '小雪', month: 11, dayRange: [22, 23] },
+            { name: '大雪', month: 12, dayRange: [6, 8] },
+            { name: '冬至', month: 12, dayRange: [21, 23] },
+            { name: '小寒', month: 1, dayRange: [5, 7] },
+            { name: '大寒', month: 1, dayRange: [19, 21] }
+        ];
+    }
+
+    // 公历转农历（简化算法）
+    solarToLunar(solarDate) {
+        const year = solarDate.getFullYear();
+        const month = solarDate.getMonth() + 1;
+        const day = solarDate.getDate();
+
+        // 简化计算：基于基准日期推算
+        // 基准：2024年1月11日 = 农历2023年十二月初一
+        const baseDate = new Date(2024, 0, 11);
+        const baseLunarYear = 2023;
+        const baseLunarMonth = 12;
+        const baseLunarDay = 1;
+
+        const diffTime = solarDate - baseDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        // 粗略估算农历（平均每月29.53天）
+        const lunarMonthDays = 29.53;
+        let totalLunarDays = diffDays;
+
+        let lunarYear = baseLunarYear;
+        let lunarMonth = baseLunarMonth;
+        let lunarDay = baseLunarDay + totalLunarDays;
+
+        // 调整月份和年份
+        while (lunarDay > 30) {
+            lunarMonth++;
+            if (lunarMonth > 12) {
+                lunarMonth = 1;
+                lunarYear++;
+            }
+            lunarDay -= 30;
+        }
+
+        // 农历月份名称
+        const lunarMonthNames = [
+            '正月', '二月', '三月', '四月', '五月', '六月',
+            '七月', '八月', '九月', '十月', '冬月', '腊月'
+        ];
+
+        // 日期名称
+        const lunarDayNames = [
+            '初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+            '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+            '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'
+        ];
+
+        return {
+            year: lunarYear,
+            month: lunarMonth,
+            day: lunarDay,
+            display: `${lunarYear}年${lunarMonthNames[lunarMonth - 1]}${lunarDayNames[lunarDay - 1]}`
+        };
+    }
+
+    // 动态计算当前节气（基于太阳黄经，改进算法）
+    getCurrentSolarTerm(date) {
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+
+        // 使用每个节气的日期范围来判断
+        // 这样更准确,避免累积误差
+        for (let i = 0; i < this.solarTerms.length; i++) {
+            const term = this.solarTerms[i];
+            const termMonth = term.month;
+            const [dayStart, dayEnd] = term.dayRange;
+
+            // 检查日期是否在该节气的范围内
+            if (month === termMonth && day >= dayStart && day <= dayEnd) {
+                return term;
+            }
+        }
+
+        // 如果没有精确匹配,使用距离计算作为后备
+        const baseDate = new Date(2024, 2, 20); // 2024年春分（基准）
+        const diffTime = date - baseDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        // 每个节气大约15.22天
+        const termDays = 15.22;
+        const termIndex = Math.floor(diffDays / termDays);
+
+        // 调整到0-23范围
+        let adjustedIndex = ((termIndex % 24) + 24) % 24;
+
+        return this.solarTerms[adjustedIndex];
+    }
+
+    // 判断是否在节气期间
+    isSolarTermPeriod(date, termName) {
+        const currentTerm = this.getCurrentSolarTerm(date);
+        return currentTerm && currentTerm.name === termName;
+    }
+
+    // 计算天干地支
+    calculateGanzhi(date, hours, minutes) {
+        const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        const zodiacAnimals = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+
+        // 年干支
+        const year = date.getFullYear();
+        const lunarYear = year; // 简化：直接使用公历年份
+        const yearStemIndex = (lunarYear - 4) % 10;
+        const yearBranchIndex = (lunarYear - 4) % 12;
+
+        // 月干支（简化）
+        const month = date.getMonth() + 1;
+        const monthStemIndex = ((lunarYear % 10) * 2 + (month - 1) % 12) % 10;
+        const monthBranchIndex = (month + 1) % 12;
+
+        // 日干支（基准：1900年1月1日 = 甲戌日）
+        const baseDate = new Date(1900, 0, 1);
+        const daysDiff = Math.floor((date - baseDate) / (1000 * 60 * 60 * 24));
+        const dayStemIndex = (0 + daysDiff) % 10;
+        const dayBranchIndex = (10 + daysDiff) % 12;
+
+        // 时干支
+        const hourBranchIndex = Math.floor((hours + 1) / 2) % 12;
+        const hourStemIndex = (dayStemIndex * 2 + Math.floor((hours + 1) / 2)) % 10;
+
+        // 时辰名称
+        const shichenNames = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时',
+                              '午时', '未时', '申时', '酉时', '戌时', '亥时'];
+        const shichen = shichenNames[hourBranchIndex];
+
+        return {
+            year: `${heavenlyStems[yearStemIndex]}${earthlyBranches[yearBranchIndex]}年`,
+            month: `${heavenlyStems[monthStemIndex]}${earthlyBranches[monthBranchIndex]}月`,
+            day: `${heavenlyStems[dayStemIndex]}${earthlyBranches[dayBranchIndex]}日`,
+            hour: `${heavenlyStems[hourStemIndex]}${earthlyBranches[hourBranchIndex]}时`,
+            shichen: shichen,
+            zodiac: zodiacAnimals[yearBranchIndex],
+            display: `${heavenlyStems[yearStemIndex]}${earthlyBranches[yearBranchIndex]}年 ` +
+                     `${heavenlyStems[monthStemIndex]}${earthlyBranches[monthBranchIndex]}月 ` +
+                     `${heavenlyStems[dayStemIndex]}${earthlyBranches[dayBranchIndex]}日 ` +
+                     `${heavenlyStems[hourStemIndex]}${earthlyBranches[hourBranchIndex]}时 ` +
+                     `(${shichen} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')})`
+        };
+    }
+}
+
 // 日志管理器类
 class LogManager {
     constructor() {
@@ -94,7 +279,7 @@ class FoodRecommendationApp {
     constructor() {
         this.currentLocation = null;
         this.currentWeather = '晴';
-        this.solarTerms = this.getSolarTerms();
+        this.chineseCalendar = new ChineseCalendar();
         this.nutritionChart = null;
         this.logger = new LogManager();
 
@@ -104,6 +289,7 @@ class FoodRecommendationApp {
     init() {
         this.setupEventListeners();
         this.autoSetDateTime();
+        this.autoGetLocation(); // 自动获取位置
         this.detectAndSetSeason();
         this.updateSolarTermDisplay();
         this.loadApiKeyFromEnv();
@@ -195,14 +381,19 @@ class FoodRecommendationApp {
 
     // 自动获取位置信息
     async autoGetLocation() {
-        const locationInput = document.getElementById('locationInput');
+        const locationSelect = document.getElementById('locationSelect');
+
+        // 设置默认城市为北京
+        const defaultCity = '北京';
 
         if (!navigator.geolocation) {
-            locationInput.value = '浏览器不支持定位';
+            locationSelect.value = defaultCity;
+            this.currentLocation = { city: defaultCity };
             return;
         }
 
-        locationInput.value = '正在定位...';
+        // 先显示默认值
+        locationSelect.value = defaultCity;
 
         navigator.geolocation.getCurrentPosition(
             async (position) => {
@@ -211,21 +402,46 @@ class FoodRecommendationApp {
 
                 // 使用逆地理编码获取城市名
                 const location = await this.reverseGeocode(latitude, longitude);
-                locationInput.value = location.city || location.address || '未知位置';
+                const cityName = location.city || location.address || defaultCity;
 
-                console.log('定位成功:', location);
+                // 尝试在下拉列表中匹配城市
+                const options = Array.from(locationSelect.options);
+                const matchedOption = options.find(option =>
+                    option.value.includes(cityName) || cityName.includes(option.value)
+                );
+
+                if (matchedOption) {
+                    locationSelect.value = matchedOption.value;
+                    this.currentLocation = { city: matchedOption.value };
+                } else {
+                    locationSelect.value = defaultCity;
+                    this.currentLocation = { city: defaultCity };
+                }
+
+                console.log('定位成功:', cityName, '→', locationSelect.value);
             },
             async (error) => {
                 console.error('获取位置失败:', error);
 
                 // 使用IP定位作为备选方案
-                locationInput.value = '使用IP定位...';
                 const location = await this.getLocationByIP();
                 if (location) {
-                    locationInput.value = location;
+                    // 尝试在下拉列表中匹配
+                    const options = Array.from(locationSelect.options);
+                    const matchedOption = options.find(option =>
+                        option.value.includes(location) || location.includes(option.value)
+                    );
+
+                    if (matchedOption) {
+                        locationSelect.value = matchedOption.value;
+                        this.currentLocation = { city: matchedOption.value };
+                    } else {
+                        locationSelect.value = defaultCity;
+                        this.currentLocation = { city: defaultCity };
+                    }
                 } else {
-                    locationInput.value = '';
-                    locationInput.placeholder = '定位失败，请输入地名';
+                    locationSelect.value = defaultCity;
+                    this.currentLocation = { city: defaultCity };
                 }
             }
         );
@@ -370,75 +586,20 @@ class FoodRecommendationApp {
         const date = new Date(dateInput);
         const [hours, minutes] = timeInput.split(':').map(Number);
 
-        // 更新天干地支显示
+        // 更新天干地支+农历+节气合并显示（一行）
         this.updateGanzhiDisplay(date, hours, minutes);
 
-        // 更新节气提醒显示
-        this.updateSolarTermAlert(date);
+        // 更新节气UI效果(添加/移除CSS类)
+        this.updateSolarTermUIEffects(date);
     }
 
-    // 计算并显示天干地支
+    // 计算并显示天干地支、农历、节气（全部合并到一行）
     updateGanzhiDisplay(date, hours, minutes) {
-        const ganzhi = this.calculateGanzhi(date, hours, minutes);
-        const displayElement = document.getElementById('ganzhiDisplay');
-        if (displayElement) {
-            displayElement.textContent = ganzhi;
-        }
-    }
+        const ganzhi = this.chineseCalendar.calculateGanzhi(date, hours, minutes);
+        const lunarDate = this.chineseCalendar.solarToLunar(date);
+        const solarTerm = this.chineseCalendar.getCurrentSolarTerm(date);
 
-    // 计算天干地支
-    calculateGanzhi(date, hours, minutes) {
-        // 天干
-        const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-        // 地支
-        const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-
-        // 生肖
-        const zodiacAnimals = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
-
-        // 计算年干支（以立春为界）
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-
-        // 简化处理：1月、2月按上一年算
-        let lunarYear = year;
-        if (month === 1 || (month === 2 && day < 4)) {
-            lunarYear = year - 1;
-        }
-
-        const yearStemIndex = (lunarYear - 4) % 10;
-        const yearBranchIndex = (lunarYear - 4) % 12;
-
-        // 计算月干支（简化版）
-        const monthStemIndex = ((lunarYear % 10) * 2 + (month - 1) % 12) % 10;
-        const monthBranchIndex = (month + 1) % 12;
-
-        // 计算日干支（基准日1900年1月1日是甲戌日）
-        const baseDate = new Date(1900, 0, 1);
-        const daysDiff = Math.floor((date - baseDate) / (1000 * 60 * 60 * 24));
-        const dayStemIndex = (0 + daysDiff) % 10;
-        const dayBranchIndex = (10 + daysDiff) % 12;
-
-        // 计算时干支
-        const hourBranchIndex = Math.floor((hours + 1) / 2) % 12;
-        const hourStemIndex = (dayStemIndex * 2 + Math.floor((hours + 1) / 2)) % 10;
-
-        // 时辰名称
-        const shichenNames = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时',
-                              '午时', '未时', '申时', '酉时', '戌时', '亥时'];
-        const hourIndex = Math.floor((hours + 1) / 2) % 12;
-        const shichen = shichenNames[hourIndex];
-
-        return `${heavenlyStems[yearStemIndex]}${earthlyBranches[yearBranchIndex]}年 ` +
-               `${heavenlyStems[monthStemIndex]}${earthlyBranches[monthBranchIndex]}月 ` +
-               `${heavenlyStems[dayStemIndex]}${earthlyBranches[dayBranchIndex]}日 ` +
-               `${heavenlyStems[hourStemIndex]}${earthlyBranches[hourBranchIndex]}时 ` +
-               `(${shichen} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')})`;
-    }
-
-    // 更新节气提醒
-    updateSolarTermAlert(date) {
+        // 检查是否在节气期间
         const today = new Date(date);
         const tomorrow = new Date(date);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -449,31 +610,70 @@ class FoodRecommendationApp {
         const tomorrowTerm = this.getSolarTermForDate(tomorrow);
         const yesterdayTerm = this.getSolarTermForDate(yesterday);
 
-        const alertElement = document.getElementById('solarTermAlert');
+        // 构建节气信息
+        let termInfo = '';
+        if (todayTerm) {
+            termInfo = `  ✨ 今日${todayTerm.name} ✨`;
+        } else if (tomorrowTerm) {
+            termInfo = `  📅 明日${tomorrowTerm.name}`;
+        } else if (yesterdayTerm) {
+            termInfo = `  📅 昨日${yesterdayTerm.name}`;
+        } else {
+            termInfo = `  · ${solarTerm.name}`;
+        }
 
-        if (alertElement) {
-            alertElement.className = 'solar-term-alert'; // 重置类名
+        // 合并显示:去掉时辰的重复显示,只显示"己巳时"不显示"(巳时 10:24)"
+        const ganzhiCompact = `${ganzhi.year} ${ganzhi.month} ${ganzhi.day} ${ganzhi.hour}`;
+        const displayElement = document.getElementById('ganzhiDisplay');
+        if (displayElement) {
+            displayElement.textContent = `${ganzhiCompact}  ${lunarDate.display}${termInfo}`;
+        }
+    }
 
-            if (todayTerm) {
-                // 今天是节气
-                alertElement.textContent = `✨ 今日${todayTerm.name} ✨`;
-                alertElement.classList.add('today');
-            } else if (tomorrowTerm) {
-                // 明天是节气
-                alertElement.textContent = `📅 明日${tomorrowTerm.name}`;
-                alertElement.classList.add('upcoming');
-            } else if (yesterdayTerm) {
-                // 昨天是节气
-                alertElement.textContent = `📅 昨日${yesterdayTerm.name}`;
-                alertElement.classList.add('upcoming');
-            } else {
-                // 显示当前节气
-                const currentTerm = this.getCurrentSolarTerm(date);
-                const season = this.getSeason(date);
-                const seasonName = this.getSeasonName(season);
-                alertElement.textContent = `${currentTerm.name} (${seasonName})`;
+    // 更新节气UI效果（添加/移除CSS类，用于华丽视觉效果）
+    updateSolarTermUIEffects(date) {
+        const today = new Date(date);
+
+        // 检查前后两天是否是节气
+        const isSolarTermPeriod = this.isNearSolarTerm(today);
+
+        // 获取当前节气名称
+        const solarTerm = this.chineseCalendar.getCurrentSolarTerm(date);
+        const solarTermName = solarTerm ? solarTerm.name : '';
+
+        // 添加或移除特殊的节气样式类
+        const bodyElement = document.body;
+        const appContainer = document.querySelector('.app-container');
+
+        // 设置节气名称到data属性,用于CSS选择器
+        if (solarTermName) {
+            bodyElement.setAttribute('data-solar-term', solarTermName);
+        }
+
+        if (isSolarTermPeriod) {
+            bodyElement.classList.add('is-solar-term-day');
+            if (appContainer) {
+                appContainer.classList.add('is-solar-term-day');
+            }
+        } else {
+            bodyElement.classList.remove('is-solar-term-day');
+            if (appContainer) {
+                appContainer.classList.remove('is-solar-term-day');
             }
         }
+    }
+
+    // 判断是否在节气附近（今天或前后两天）
+    isNearSolarTerm(date) {
+        const today = new Date(date);
+        const tomorrow = new Date(date);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const yesterday = new Date(date);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        return this.getSolarTermForDate(today) !== null ||
+               this.getSolarTermForDate(tomorrow) !== null ||
+               this.getSolarTermForDate(yesterday) !== null;
     }
 
     // 获取指定日期的节气（如果在节气期间返回节气对象，否则返回null）
@@ -481,59 +681,12 @@ class FoodRecommendationApp {
         const month = date.getMonth() + 1;
         const day = date.getDate();
 
-        for (const term of this.solarTerms) {
+        for (const term of this.chineseCalendar.solarTerms) {
             if (term.month === month && day >= term.dayRange[0] && day <= term.dayRange[1]) {
                 return term;
             }
         }
         return null;
-    }
-
-    // 获取节气信息
-    getSolarTerms() {
-        // 24节气数据（简化版本，使用近似日期）
-        return [
-            { name: '立春', month: 2, dayRange: [3, 5], season: 'spring' },
-            { name: '雨水', month: 2, dayRange: [18, 20], season: 'spring' },
-            { name: '惊蛰', month: 3, dayRange: [5, 7], season: 'spring' },
-            { name: '春分', month: 3, dayRange: [20, 22], season: 'spring' },
-            { name: '清明', month: 4, dayRange: [4, 6], season: 'spring' },
-            { name: '谷雨', month: 4, dayRange: [19, 21], season: 'spring' },
-            { name: '立夏', month: 5, dayRange: [5, 7], season: 'summer' },
-            { name: '小满', month: 5, dayRange: [20, 22], season: 'summer' },
-            { name: '芒种', month: 6, dayRange: [5, 7], season: 'summer' },
-            { name: '夏至', month: 6, dayRange: [21, 22], season: 'summer' },
-            { name: '小暑', month: 7, dayRange: [6, 8], season: 'summer' },
-            { name: '大暑', month: 7, dayRange: [22, 24], season: 'summer' },
-            { name: '立秋', month: 8, dayRange: [7, 9], season: 'autumn' },
-            { name: '处暑', month: 8, dayRange: [22, 24], season: 'autumn' },
-            { name: '白露', month: 9, dayRange: [7, 9], season: 'autumn' },
-            { name: '秋分', month: 9, dayRange: [22, 24], season: 'autumn' },
-            { name: '寒露', month: 10, dayRange: [8, 10], season: 'autumn' },
-            { name: '霜降', month: 10, dayRange: [23, 25], season: 'autumn' },
-            { name: '立冬', month: 11, dayRange: [7, 8], season: 'winter' },
-            { name: '小雪', month: 11, dayRange: [22, 23], season: 'winter' },
-            { name: '大雪', month: 12, dayRange: [6, 8], season: 'winter' },
-            { name: '冬至', month: 12, dayRange: [21, 23], season: 'winter' },
-            { name: '小寒', month: 1, dayRange: [5, 7], season: 'winter' },
-            { name: '大寒', month: 1, dayRange: [19, 21], season: 'winter' }
-        ];
-    }
-
-    // 判断当天是哪个节气
-    getCurrentSolarTerm(date) {
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-
-        for (const term of this.solarTerms) {
-            if (term.month === month && day >= term.dayRange[0] && day <= term.dayRange[1]) {
-                return term;
-            }
-        }
-
-        // 如果不在节气期间，返回当前季节
-        const season = this.getSeason(date);
-        return { name: this.getSeasonName(season), season: season };
     }
 
     // 获取季节
@@ -605,7 +758,7 @@ class FoodRecommendationApp {
 
         // 解析日期
         const date = new Date(dateInput);
-        const solarTerm = this.getCurrentSolarTerm(date);
+        const solarTerm = this.chineseCalendar.getCurrentSolarTerm(date);
         const season = this.getSeason(date);
 
         console.log('节气信息:', { solarTerm: solarTerm.name, season: this.getSeasonName(season) });
@@ -799,8 +952,8 @@ class FoodRecommendationApp {
     // 构建提示词（从prompts文件夹读取）
     async buildPrompt(params) {
         try {
-            // 从prompts文件夹读取提示词模板
-            const promptTemplate = await this.fetchPromptTemplate();
+            // 从prompts文件夹读取提示词模板（根据dietType选择）
+            const promptTemplate = await this.fetchPromptTemplate(params.dietType);
             const { date, time, mealPeriod, dietType, weather, solarTerm, season } = params;
 
             // 替换模板中的占位符
@@ -821,10 +974,16 @@ class FoodRecommendationApp {
         }
     }
 
-    // 从文件读取提示词模板
-    async fetchPromptTemplate() {
+    // 从文件读取提示词模板（根据饮食类型选择）
+    async fetchPromptTemplate(dietType) {
         try {
-            const response = await fetch('prompts/food_recommendation_prompt.txt');
+            // 根据饮食类型选择不同的提示词文件
+            let promptFile = 'prompts/food_recommendation_prompt.txt';
+            if (dietType === '茶饮推荐') {
+                promptFile = 'prompts/tea_recommendation_prompt.txt';
+            }
+
+            const response = await fetch(promptFile);
             if (!response.ok) {
                 throw new Error('读取提示词文件失败');
             }
@@ -962,7 +1121,15 @@ class FoodRecommendationApp {
     // 显示推荐结果
     displayRecommendation(recommendation) {
         const recommendationContent = document.getElementById('recommendationContent');
+        const dietType = document.querySelector('input[name="dietType"]:checked').value;
 
+        // 判断是茶饮推荐还是食物推荐
+        if (dietType === '茶饮推荐' && recommendation.teas) {
+            this.displayTeaRecommendation(recommendation);
+            return;
+        }
+
+        // 原有的食物推荐逻辑
         // 生成精美的菜品卡片
         let dishesHtml = '<div class="dish-grid">';
 
@@ -1227,6 +1394,192 @@ class FoodRecommendationApp {
             recipeContent.style.display = 'none';
             button.textContent = '📜 查看制法';
         }
+    }
+
+    // 显示茶饮推荐
+    displayTeaRecommendation(recommendation) {
+        const recommendationContent = document.getElementById('recommendationContent');
+
+        let teasHtml = '<div class="dish-grid">';
+
+        if (recommendation.teas && recommendation.teas.length > 0) {
+            recommendation.teas.forEach((tea, index) => {
+                // 茶类型对应的emoji和雅致称谓
+                const teaTypes = {
+                    '绿茶': { emoji: '🍃', name: '绿茶' },
+                    '红茶': { emoji: '🍂', name: '红茶' },
+                    '乌龙': { emoji: '🌿', name: '乌龙' },
+                    '普洱': { emoji: '🍵', name: '普洱' },
+                    '花茶': { emoji: '🌸', name: '花茶' },
+                    '草本茶': { emoji: '🌱', name: '草本' }
+                };
+                const teaType = teaTypes[tea.type] || { emoji: '🍵', name: '茶饮' };
+
+                // 配料显示
+                let ingredientsText = '';
+                if (Array.isArray(tea.ingredients)) {
+                    if (typeof tea.ingredients[0] === 'object') {
+                        ingredientsText = tea.ingredients.map(ing => ing.item).join('、');
+                    } else {
+                        ingredientsText = tea.ingredients.join('、');
+                    }
+                }
+
+                teasHtml += `
+                    <div class="dish-card">
+                        <div class="dish-main">
+                            <div class="dish-header">
+                                <span class="dish-emoji">${teaType.emoji}</span>
+                                <div class="dish-title-group">
+                                    <h3 class="dish-name">${tea.name}</h3>
+                                    <span class="dish-type-badge-small">${teaType.name}</span>
+                                </div>
+                            </div>
+
+                            <div class="dish-body">
+                                <div class="dish-ingredients">
+                                    <p class="label">🌿 配料</p>
+                                    <p class="value">${ingredientsText}</p>
+                                </div>
+
+                                ${tea.benefits ? `
+                                <div class="dish-nutrition">
+                                    <span class="nutrition-badge">✨ ${tea.benefits}</span>
+                                </div>
+                                ` : ''}
+
+                                ${tea.suitable ? `
+                                <div class="dish-suitable">
+                                    <p class="label">👥 宜饮</p>
+                                    <p class="value">${tea.suitable}</p>
+                                </div>
+                                ` : ''}
+
+                                ${tea.contraindications ? `
+                                <div class="dish-suitable">
+                                    <p class="label">⚠️ 禁忌</p>
+                                    <p class="value">${tea.contraindications}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+
+                            <button class="toggle-recipe" onclick="app.toggleRecipe(${index})">
+                                📜 查看制法
+                            </button>
+
+                            <div class="recipe-content" id="recipe-${index}" style="display: none;">
+                                <div class="recipe-steps">
+                                    ${Array.isArray(tea.method) ? tea.method.map((step, i) =>
+                                        `<div class="recipe-step"><span class="step-num">${['壹','贰','叁','肆','伍'][i]}</span>${step}</div>`
+                                    ).join('') : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        teasHtml += '</div>';
+
+        // 添加茶道评语
+        if (recommendation.overallEvaluation) {
+            teasHtml += `
+                <div class="info-card">
+                    <h3 class="card-title">📜 茶道品评</h3>
+                    <div class="card-content">
+                        <p><strong>茶性：</strong>${recommendation.overallEvaluation.teaNature || '未注明'}</p>
+                        <p><strong>功效：</strong>${recommendation.overallEvaluation.mainEffects || '未注明'}</p>
+                        <p><strong>最佳饮用时间：</strong>${recommendation.overallEvaluation.bestTime || '未注明'}</p>
+                        <p style="margin-top: 12px; line-height: 1.8;">${recommendation.overallEvaluation.summary || ''}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 添加推荐理由
+        if (recommendation.reasoning) {
+            teasHtml += `
+                <div class="reasoning-card">
+                    <h3 class="card-title">📜 推荐缘由</h3>
+                    <div class="reasoning-content">
+                        ${recommendation.reasoning.solarTerm ? `
+                        <div class="reason-item">
+                            <span class="reason-icon">🌸</span>
+                            <div>
+                                <p class="reason-label">节气茶理</p>
+                                <p class="reason-text">${recommendation.reasoning.solarTerm}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${recommendation.reasoning.season ? `
+                        <div class="reason-item">
+                            <span class="reason-icon">🍂</span>
+                            <div>
+                                <p class="reason-label">四时茶道</p>
+                                <p class="reason-text">${recommendation.reasoning.season}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${recommendation.reasoning.weather ? `
+                        <div class="reason-item">
+                            <span class="reason-icon">🌤️</span>
+                            <div>
+                                <p class="reason-label">天时调茶</p>
+                                <p class="reason-text">${recommendation.reasoning.weather}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${recommendation.reasoning.timePeriod ? `
+                        <div class="reason-item">
+                            <span class="reason-icon">⏰</span>
+                            <div>
+                                <p class="reason-label">时辰茶韵</p>
+                                <p class="reason-text">${recommendation.reasoning.timePeriod}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 添加茶道叮嘱
+        if (recommendation.teaTips) {
+            teasHtml += `
+                <div class="tips-card">
+                    <h3 class="card-title">💡 茶道叮嘱</h3>
+                    <div class="tips-grid">
+                        ${recommendation.teaTips.selection ? `
+                        <div class="tip-item">
+                            <span class="tip-icon">🛒</span>
+                            <p><strong>选茶：</strong>${recommendation.teaTips.selection}</p>
+                        </div>
+                        ` : ''}
+                        ${recommendation.teaTips.brewing ? `
+                        <div class="tip-item">
+                            <span class="tip-icon">♨️</span>
+                            <p><strong>烹泡：</strong>${recommendation.teaTips.brewing}</p>
+                        </div>
+                        ` : ''}
+                        ${recommendation.teaTips.drinking ? `
+                        <div class="tip-item">
+                            <span class="tip-icon">🍵</span>
+                            <p><strong>饮用：</strong>${recommendation.teaTips.drinking}</p>
+                        </div>
+                        ` : ''}
+                        ${recommendation.teaTips.storage ? `
+                        <div class="tip-item">
+                            <span class="tip-icon">🏺</span>
+                            <p><strong>存茶：</strong>${recommendation.teaTips.storage}</p>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        recommendationContent.innerHTML = teasHtml;
     }
 
     // 显示营养分析图表

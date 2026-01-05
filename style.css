@@ -6,56 +6,95 @@
 }
 
 :root {
-    /* 春季配色 - 春和景明 */
-    --spring-primary: #c2185b; /* 海棠红 */
-    --spring-secondary: #ec407a; /* 梅红 */
-    --spring-bg: #fff0f5; /* 淡粉白 */
-    --spring-accent: #880e4f; /* 深红 */
-    --spring-text: #4a1423; /* 暗红 */
+    /* ============================================
+       中国古风压制配色系统
+       基于《周礼·考工记》传统色彩制度
+       采用低饱和度、沉稳内敛的色调
+       ============================================ */
 
-    /* 夏季配色 - 荷映日辉 */
-    --summer-primary: #00897b; /* 竹青 */
-    --summer-secondary: #26a69a; /* 青绿 */
-    --summer-bg: #e0f2f1; /* 淡青白 */
-    --summer-accent: #00695c; /* 深青 */
-    --summer-text: #004d40; /* 墨绿 */
+    /* 春季配色 - 木德 生机内敛 */
+    /* 主色: 柳绿、竹青、艾绿 */
+    --spring-primary: #6b8e23;      /* 艾绿 - 沉稳春意 */
+    --spring-secondary: #8fbc8f;    /* 竹青 - 内敛生机 */
+    --spring-tertiary: #9acd32;     /* 橄榄绿 - 春意深藏 */
+    --spring-bg: #f5f5dc;           /* 米色 - 宣纸底色 */
+    --spring-accent: #9ca874;       /* 芥绿 - 春之克制 */
+    --spring-text: #4a4a4a;         /* 墨灰 - 沉稳厚重 */
+    --spring-light: #fafaf0;        /* 浅米背景 */
+    --spring-border: #dcdcc8;       /* 淡灰绿边框 */
 
-    /* 秋季配色 - 金风玉露 */
-    --autumn-primary: #e65100; /* 杏黄 */
-    --autumn-secondary: #ff9800; /* 橘黄 */
-    --autumn-bg: #fff8e1; /* 淡杏白 */
-    --autumn-accent: #bf360c; /* 赭石 */
-    --autumn-text: #5d3a1a; /* 深褐 */
+    /* 夏季配色 - 火德 炎而不烈 */
+    /* 主色: 赭石、檀棕、赤褐 */
+    --summer-primary: #a0522d;      /* 赭石 - 夏之克制 */
+    --summer-secondary: #8b4513;    /* 檀棕 - 稳重炎夏 */
+    --summer-tertiary: #cd853f;     /* 秘鲁色 - 夏木阴阴 */
+    --summer-bg: #faf0e6;           /* 亚麻色 - 古纸质感 */
+    --summer-accent: #bc8f8f;       /* 玫瑰褐 - 夏花沉香 */
+    --summer-text: #3d3d3d;         /* 浓墨 - 夏日深沉 */
+    --summer-light: #fdf5e6;        /* 老蕾丝色 */
+    --summer-border: #e8dcc8;       /* 古黄褐边框 */
 
-    /* 冬季配色 - 煮雪烹茶 */
-    --winter-primary: #5e35b1; /* 紫檀 */
-    --winter-secondary: #7e57c2; /* 藕荷 */
-    --winter-bg: #f3e5f5; /* 淡紫白 */
-    --winter-accent: #4527a0; /* 深紫 */
-    --winter-text: #311b92; /* 墨紫 */
+    /* 秋季配色 - 金德 收敛凝练 */
+    /* 主色: 檀棕、古铜、赭黄 */
+    --autumn-primary: #8b7355;      /* 檀棕 - 秋之凝重 */
+    --autumn-secondary: #a0826d;    /* 鞣色 - 秋意收敛 */
+    --autumn-tertiary: #cd853f;     /* 秘鲁色 - 金秋内敛 */
+    --autumn-bg: #f5f5dc;           /* 米色 - 秋收稳重 */
+    --autumn-accent: #8b6914;       /* 暗金 - 秋实藏敛 */
+    --autumn-text: #4a4a4a;         /* 褐墨 - 秋之沉淀 */
+    --autumn-light: #fafaf0;        /* 浅米背景 */
+    --autumn-border: #d4c8a8;       /* 古黄褐边框 */
 
-    /* 中国风传统色 - 雅致配色 */
-    --china-red: #b71c1c;      /* 胭脂红 */
-    --china-gold: #cfb53b;     /* 古金 */
-    --china-jade: #2e7d32;     /* 碧玉 */
-    --china-ink: #212121;      /* 徽墨 */
-    --china-brown: #8d6e63;    /* 茶褐 */
-    --china-purple: #6a1b9a;   /* 紫藤 */
-    --china-cyan: #006064;     /* 黛蓝 */
-    --china-rouge: #d81b60;    /* 胭脂 */
-    --china-vermilion: #e64a19; /* 朱砂 */
+    /* 冬季配色 - 水德 寒而不冽 */
+    /* 主色: 黛青、墨灰、铁灰 */
+    --winter-primary: #4a5a6a;      /* 黛青 - 冬之深沉 */
+    --winter-secondary: #5a6a7a;    /* 铁灰 - 寒冬克制 */
+    --winter-tertiary: #6a7a8a;     /* 石板灰 - 冬日凝重 */
+    --winter-bg: #f0f0f0;           /* 亮灰 - 冬雪静谧 */
+    --winter-accent: #5a7a8a;       /* 青灰 - 冬水深沉 */
+    --winter-text: #3a3a3a;         /* 徽墨 - 冬之凝练 */
+    --winter-light: #f8f8f8;        /* 浅灰背景 */
+    --winter-border: #e0e0e0;       /* 淡灰边框 */
 
-    /* 默认主题色（春季） */
-    --primary-color: #c2185b;
-    --secondary-color: #ec407a;
-    --accent-color: #880e4f;
-    --bg-color: #fff0f5;
-    --text-color: #4a1423;
-    --text-light: #880e4f;
-    --border-color: #f8bbd0;
+    /* ============================================
+       中国传统色 - 古色谱（压制版）
+       参考《天工开物》《本草纲目》色彩
+       ============================================ */
+    --china-red: #8b3a3a;           /* 暗胭脂 - 压制红 */
+    --china-crimson: #a0522d;       /* 暗朱砂 - 克制红 */
+    --china-pink: #a87b7b;          /* 暗桃粉 - 内敛粉 */
+    --china-rose: #9a4a4a;          /* 暗玫瑰 - 收敛红 */
+    --gold: #b8976e;                /* 暗金 - 古金压制 */
+    --china-gold: #a88a6e;          /* 暗藤黄 - 克制金 */
+    --china-amber: #c9a86c;         /* 暗琥珀 - 内敛橙 */
+    --jade: #5a7a6a;                /* 暗碧玉 - 压制青 */
+    --china-jade: #4a6a5a;          /* 暗翡翠 - 克制绿 */
+    --bamboo: #6a8a7a;              /* 暗竹青 - 沉稳绿 */
+    --ink: #2a2a2a;                 /* 徽墨 - 古墨深黑 */
+    --china-ink: #3a3a3a;           /* 松烟墨 - 墨灰 */
+    --charcoal: #4a4a4a;            /* 墨灰 - 克制灰 */
+    --brown: #7a6a5a;               /* 暗茶褐 - 压制褐 */
+    --cinnamon: #8a7a6a;            /* 暗肉桂 - 收敛棕 */
+    --purple: #6a5a7a;              /* 暗紫藤 - 克制紫 */
+    --lavender: #9a8aaa;            /* 暗藕荷 - 内敛紫 */
+    --cyan: #4a6a7a;                /* 暗黛蓝 - 压制蓝 */
+    --indigo: #3a4a6a;              /* 暗靛青 - 深沉蓝 */
+    --turquoise: #5a8a8a;           /* 暗绿松 - 克制青 */
+
+    /* ============================================
+       默认主题色（根据季节动态变化）
+       ============================================ */
+    --primary-color: #6b8e23;
+    --secondary-color: #8fbc8f;
+    --tertiary-color: #9acd32;
+    --accent-color: #9ca874;
+    --bg-color: #f5f5dc;
+    --text-color: #4a4a4a;
+    --text-light: #6a6a6a;
+    --border-color: #dcdcc8;
     --card-bg: #ffffff;
-    --shadow: 0 2px 8px rgba(194, 24, 91, 0.08);
-    --shadow-hover: 0 4px 12px rgba(194, 24, 91, 0.15);
+    --shadow: none;
+    --shadow-hover: none;
 }
 
 body {
@@ -93,7 +132,7 @@ body {
 
 /* 头部样式 */
 .app-header {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-color);
     color: white;
     padding: 24px 20px;
     text-align: center;
@@ -134,19 +173,19 @@ body {
     padding: 20px;
 }
 
-/* 区块样式 */
+/* 区块样式 - 简洁版 */
 .section {
     margin-bottom: 20px;
-    padding: 16px;
-    background: var(--card-bg);
-    border-radius: 10px;
-    box-shadow: var(--shadow);
+    padding: 12px 16px;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
     transition: all 0.3s ease;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: none;
 }
 
 .section:hover {
-    box-shadow: var(--shadow-hover);
+    box-shadow: none;
 }
 
 .section-title {
@@ -202,7 +241,7 @@ body {
 .primary-btn {
     width: 100%;
     padding: 14px 24px;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 8px;
@@ -454,7 +493,7 @@ body {
     width: 100%;
     height: 200px;
     overflow: hidden;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--china-ink);
 }
 
 .dish-image {
@@ -550,7 +589,7 @@ body {
 .nutrition-badge {
     display: inline-block;
     padding: 6px 14px;
-    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    background: var(--china-red);
     color: white;
     border-radius: 20px;
     font-size: 14px;
@@ -862,26 +901,229 @@ body.winter {
 }
 
 /* 天干地支和节气显示行 */
+/* 天干地支和节气显示 - 一行展示,简洁版 */
 .ganzhi-solar-term-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 16px;
 }
 
 .ganzhi-display {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary-color);
     color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: 10px 16px;
+    border-radius: 0;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     text-align: center;
-    letter-spacing: 1px;
+    letter-spacing: 0.2px;
+    line-height: 1.6;
+    transition: background 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: none;
+    box-shadow: none;
+}
+
+/* ============================================
+   季节主题配色应用
+   ============================================ */
+
+/* 春季主题 - 桃红映柳绿 */
+body.spring {
+    --primary-color: var(--spring-primary);
+    --secondary-color: var(--spring-secondary);
+    --tertiary-color: var(--spring-tertiary);
+    --accent-color: var(--spring-accent);
+    --bg-color: var(--spring-bg);
+    --text-color: var(--spring-text);
+    --border-color: var(--spring-border);
+}
+
+body.spring .ganzhi-display {
+    background: #6b8e23; /* 艾绿 - 春季古风 */
+}
+
+/* 夏季主题 - 朱砂映竹青 */
+body.summer {
+    --primary-color: var(--summer-primary);
+    --secondary-color: var(--summer-secondary);
+    --tertiary-color: var(--summer-tertiary);
+    --accent-color: var(--summer-accent);
+    --bg-color: var(--summer-bg);
+    --text-color: var(--summer-text);
+    --border-color: var(--summer-border);
+}
+
+body.summer .ganzhi-display {
+    background: #a0522d; /* 赭石 - 夏季古风 */
+}
+
+/* 秋季主题 - 杏黄映枫丹 */
+body.autumn {
+    --primary-color: var(--autumn-primary);
+    --secondary-color: var(--autumn-secondary);
+    --tertiary-color: var(--autumn-tertiary);
+    --accent-color: var(--autumn-accent);
+    --bg-color: var(--autumn-bg);
+    --text-color: var(--autumn-text);
+    --border-color: var(--autumn-border);
+}
+
+body.autumn .ganzhi-display {
+    background: #8b7355; /* 檀棕 - 秋季古风 */
+}
+
+/* 冬季主题 - 黛蓝映梅红 */
+body.winter {
+    --primary-color: var(--winter-primary);
+    --secondary-color: var(--winter-secondary);
+    --tertiary-color: var(--winter-tertiary);
+    --accent-color: var(--winter-accent);
+    --bg-color: var(--winter-bg);
+    --text-color: var(--winter-text);
+    --border-color: var(--winter-border);
+}
+
+body.winter .ganzhi-display {
+    background: #4a5a6a; /* 黛青 - 冬季古风 */
+}
+
+/* ============================================
+   24节气古风压制色彩 - 沉稳内敛
+   ============================================ */
+
+/* 春季节气 */
+
+/* 立春 - 春回大地,生机内敛 */
+body[data-solar-term="立春"] .ganzhi-display {
+    background: #7a8a6a; /* 暗橄榄绿 - 初春沉稳 */
+}
+
+/* 雨水 - 春雨绵绵,润物无声 */
+body[data-solar-term="雨水"] .ganzhi-display {
+    background: #6a8a7a; /* 暗竹青 - 春雨内敛 */
+}
+
+/* 惊蛰 - 春雷乍动,万物潜发 */
+body[data-solar-term="惊蛰"] .ganzhi-display {
+    background: #5a7a6a; /* 暗碧玉 - 惊蛰克制 */
+}
+
+/* 春分 - 昼夜平分,阴阳调和 */
+body[data-solar-term="春分"] .ganzhi-display {
+    background: #8a9a7a; /* 暗艾绿 - 春分平衡 */
+}
+
+/* 清明 - 春和景明,清气上升 */
+body[data-solar-term="清明"] .ganzhi-display {
+    background: #7a9a8a; /* 暗青绿 - 清明清澈 */
+}
+
+/* 谷雨 - 雨生百谷,万物静长 */
+body[data-solar-term="谷雨"] .ganzhi-display {
+    background: #6a9a8a; /* 暗湖绿 - 谷雨深沉 */
+}
+
+/* 夏季节气 */
+
+/* 立夏 - 夏日初长,热而不烈 */
+body[data-solar-term="立夏"] .ganzhi-display {
+    background: #9a8a7a; /* 暗赭石 - 初夏克制 */
+}
+
+/* 小满 - 小得盈满,内敛充实 */
+body[data-solar-term="小满"] .ganzhi-display {
+    background: #8a7a6a; /* 暗檀棕 - 小满藏敛 */
+}
+
+/* 芒种 - 芒种播种,稳重繁忙 */
+body[data-solar-term="芒种"] .ganzhi-display {
+    background: #a0826d; /* 暗鞣色 - 芒种沉稳 */
+}
+
+/* 夏至 - 阳气最盛,收敛克制 */
+body[data-solar-term="夏至"] .ganzhi-display {
+    background: #a0522d; /* 暗朱砂 - 夏至压制 */
+}
+
+/* 小暑 - 暑气渐长,荷花静放 */
+body[data-solar-term="小暑"] .ganzhi-display {
+    background: #bc8f8f; /* 暗玫瑰褐 - 小暑内敛 */
+}
+
+/* 大暑 - 酷暑盛夏,热极生凉 */
+body[data-solar-term="大暑"] .ganzhi-display {
+    background: #8b3a3a; /* 暗胭脂 - 大暑收敛 */
+}
+
+/* 秋季节气 */
+
+/* 立秋 - 秋风送爽,凉而不寒 */
+body[data-solar-term="立秋"] .ganzhi-display {
+    background: #7a8a9a; /* 暗青灰 - 初秋沉稳 */
+}
+
+/* 处暑 - 暑气消退,清秋内敛 */
+body[data-solar-term="处暑"] .ganzhi-display {
+    background: #6a7a8a; /* 暗石板灰 - 处暑清凉 */
+}
+
+/* 白露 - 露凝而白,秋意深藏 */
+body[data-solar-term="白露"] .ganzhi-display {
+    background: #9a9a9a; /* 暗灰白 - 白露清冷 */
+    color: #4a4a4a; /* 深墨文字 */
+}
+
+/* 秋分 - 昼夜平分,金秋静美 */
+body[data-solar-term="秋分"] .ganzhi-display {
+    background: #8b7355; /* 暗檀棕 - 秋分凝练 */
+}
+
+/* 寒露 - 露气寒冷,深秋藏敛 */
+body[data-solar-term="寒露"] .ganzhi-display {
+    background: #a0826d; /* 暗秘鲁色 - 寒露克制 */
+}
+
+/* 霜降 - 霜降大地,万物收敛 */
+body[data-solar-term="霜降"] .ganzhi-display {
+    background: #6a5a7a; /* 暗紫藤 - 霜降深沉 */
+}
+
+/* 冬季节气 */
+
+/* 立冬 - 冬日初临,寒而不冽 */
+body[data-solar-term="立冬"] .ganzhi-display {
+    background: #5a6a7a; /* 暗铁灰 - 初冬内敛 */
+}
+
+/* 小雪 - 小雪纷飞,寒气克制 */
+body[data-solar-term="小雪"] .ganzhi-display {
+    background: #a0a0a0; /* 暗雪白 - 小雪静谧 */
+    color: #3a3a3a;
+}
+
+/* 大雪 - 大雪纷飞,隆冬凝重 */
+body[data-solar-term="大雪"] .ganzhi-display {
+    background: #7a8a9a; /* 暗冰蓝 - 大雪深沉 */
+}
+
+/* 冬至 - 阴气最盛,阳气始生 */
+body[data-solar-term="冬至"] .ganzhi-display {
+    background: #3a3a3a; /* 暗墨黑 - 冬至极阴 */
+}
+
+/* 小寒 - 小寒时节,深冬凝练 */
+body[data-solar-term="小寒"] .ganzhi-display {
+    background: #4a5a6a; /* 暗黛蓝 - 小寒克制 */
+}
+
+/* 大寒 - 大寒时节,寒极生暖 */
+body[data-solar-term="大寒"] .ganzhi-display {
+    background: #4a4a5a; /* 暗深灰 - 大寒沉稳 */
 }
 
 .solar-term-alert {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: var(--china-rose);
     color: white;
     padding: 8px 12px;
     border-radius: 6px;
@@ -891,12 +1133,12 @@ body.winter {
 }
 
 .solar-term-alert.upcoming {
-    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-    color: #d35400;
+    background: var(--china-gold);
+    color: var(--ink);
 }
 
 .solar-term-alert.today {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    background: var(--china-red);
     color: white;
     animation: pulse 2s ease-in-out infinite;
 }
@@ -1122,4 +1364,287 @@ body.winter {
 
 .nutrition-table tr:last-child td {
     border-bottom: none;
+}
+
+/* ============================================
+   节气主题样式 - 大气华丽效果
+   ============================================ */
+
+/* 节气日期背景效果 */
+body.is-solar-term-day {
+    position: relative;
+    overflow-x: hidden;
+}
+
+body.is-solar-term-day::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(58, 58, 58, 0.02);
+    pointer-events: none;
+    z-index: 0;
+    animation: solarTermBgPulse 8s ease-in-out infinite;
+}
+
+@keyframes solarTermBgPulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* 节气应用容器样式 */
+.app-container.is-solar-term-day {
+    position: relative;
+    border: 2px solid var(--primary-color);
+    box-shadow:
+        0 0 0 1px rgba(194, 24, 91, 0.1),
+        0 8px 32px rgba(194, 24, 91, 0.15),
+        0 0 60px rgba(194, 24, 91, 0.1);
+    animation: solarTermGlow 3s ease-in-out infinite;
+}
+
+@keyframes solarTermGlow {
+    0%, 100% {
+        box-shadow:
+            0 0 0 1px rgba(194, 24, 91, 0.1),
+            0 8px 32px rgba(194, 24, 91, 0.15),
+            0 0 60px rgba(194, 24, 91, 0.1);
+    }
+    50% {
+        box-shadow:
+            0 0 0 1px rgba(194, 24, 91, 0.2),
+            0 8px 32px rgba(194, 24, 91, 0.25),
+            0 0 80px rgba(194, 24, 91, 0.2);
+    }
+}
+
+/* 节气头部样式 */
+body.is-solar-term-day .app-header {
+    background: var(--primary-color);
+    position: relative;
+    overflow: hidden;
+}
+
+body.is-solar-term-day .app-header::before {
+    display: none;
+}
+
+body.is-solar-term-day .app-header h1,
+body.is-solar-term-day .app-header .subtitle {
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* 节气提示框样式 */
+body.is-solar-term-day .ganzhi-display {
+    background: var(--primary-color);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    padding: 10px 16px;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+body.is-solar-term-day .ganzhi-display::before {
+    display: none;
+}
+
+@keyframes solarTermAlertPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+@keyframes solarTermShine {
+    0% {
+        left: -100%;
+    }
+    50%, 100% {
+        left: 100%;
+    }
+}
+
+/* 节气环境区块 */
+body.is-solar-term-day .env-block {
+    border: 2px solid rgba(194, 24, 91, 0.2);
+    box-shadow: 0 4px 16px rgba(194, 24, 91, 0.12);
+}
+
+/* 节气按钮样式 */
+body.is-solar-term-day .primary-btn {
+    background: var(--primary-color);
+    box-shadow: none;
+}
+
+@keyframes solarTermButton {
+    0%, 100% {
+        box-shadow:
+            0 4px 16px rgba(194, 24, 91, 0.3),
+            0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+    }
+    50% {
+        box-shadow:
+            0 6px 20px rgba(194, 24, 91, 0.4),
+            0 0 0 2px rgba(255, 255, 255, 0.3) inset;
+    }
+}
+
+body.is-solar-term-day .primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 24px rgba(194, 24, 91, 0.4),
+        0 0 0 2px rgba(255, 255, 255, 0.3) inset;
+}
+
+/* 节气卡片样式 */
+body.is-solar-term-day .info-card {
+    border: 2px solid rgba(194, 24, 91, 0.15);
+    box-shadow: 0 4px 16px rgba(194, 24, 91, 0.1);
+    animation: solarTermCard 5s ease-in-out infinite;
+}
+
+@keyframes solarTermCard {
+    0%, 100% {
+        border-color: rgba(194, 24, 91, 0.15);
+    }
+    50% {
+        border-color: rgba(194, 24, 91, 0.25);
+    }
+}
+
+body.is-solar-term-day .card-title {
+    background: var(--primary-color);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+body.is-solar-term-day .card-title::before {
+    display: none;
+}
+
+/* 季节特定装饰 */
+/* 春季节气 */
+body.spring.is-solar-term-day::after {
+    content: '🌸';
+    position: fixed;
+    top: 10%;
+    right: 5%;
+    font-size: 60px;
+    opacity: 0.15;
+    animation: springFloat 6s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes springFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-20px) rotate(5deg);
+    }
+}
+
+/* 夏季节气 */
+body.summer.is-solar-term-day::after {
+    content: '🌿';
+    position: fixed;
+    top: 10%;
+    right: 5%;
+    font-size: 60px;
+    opacity: 0.15;
+    animation: summerFloat 5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes summerFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.15;
+    }
+    50% {
+        transform: translateY(-15px) rotate(10deg);
+        opacity: 0.25;
+    }
+}
+
+/* 秋季节气 */
+body.autumn.is-solar-term-day::after {
+    content: '🍂';
+    position: fixed;
+    top: 10%;
+    right: 5%;
+    font-size: 60px;
+    opacity: 0.15;
+    animation: autumnFloat 7s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes autumnFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-30px) rotate(-15deg);
+    }
+}
+
+/* 冬季节气 */
+body.winter.is-solar-term-day::after {
+    content: '❄️';
+    position: fixed;
+    top: 10%;
+    right: 5%;
+    font-size: 60px;
+    opacity: 0.15;
+    animation: winterFloat 8s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes winterFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.15;
+    }
+    50% {
+        transform: translateY(-25px) rotate(25deg);
+        opacity: 0.25;
+    }
+}
+
+/* 响应式调整 */
+@media (max-width: 480px) {
+    body.is-solar-term-day .solar-term-alert {
+        font-size: 16px;
+        padding: 15px 16px;
+    }
+
+    body.is-solar-term-day .ganzhi-display {
+        font-size: 13px;
+        padding: 14px 16px;
+    }
+
+    body.spring.is-solar-term-day::after,
+    body.summer.is-solar-term-day::after,
+    body.autumn.is-solar-term-day::after,
+    body.winter.is-solar-term-day::after {
+        font-size: 40px;
+        top: 5%;
+        right: 3%;
+    }
 }

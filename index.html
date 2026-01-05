@@ -20,54 +20,79 @@
             <section class="section environment-section">
                 <h2 class="section-title">🌸 天时地利</h2>
 
-                <!-- 综合信息框 -->
-                <div class="env-block">
-                    <div class="env-body">
-                        <!-- 日期时间位置天气综合行 -->
-                        <div class="compact-info-row">
-                            <div class="compact-item">
-                                <label>黄历</label>
-                                <input type="date" id="dateInput" class="compact-input">
-                            </div>
-                            <div class="compact-item">
-                                <label>时辰</label>
-                                <input type="time" id="timeInput" class="compact-input">
-                            </div>
-                            <div class="compact-item">
-                                <label>天地</label>
-                                <input type="text" id="locationInput" class="compact-input" placeholder="输入地名">
-                            </div>
-                            <div class="compact-item">
-                                <label>天候</label>
-                                <select id="weatherSelect" class="compact-select">
-                                    <option value="晴">晴</option>
-                                    <option value="多云">多云</option>
-                                    <option value="阴">阴</option>
-                                    <option value="雨">雨</option>
-                                    <option value="雪">雪</option>
-                                    <option value="雾">雾</option>
-                                    <option value="大风">风</option>
-                                    <option value="沙尘">尘</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- 天干地支和节气显示 -->
-                        <div class="ganzhi-solar-term-row">
-                            <div class="ganzhi-display" id="ganzhiDisplay">
-                                正在计算天干地支...
-                            </div>
-                            <div class="solar-term-alert" id="solarTermAlert">
-                                正在识别节气...
-                            </div>
-                        </div>
-
-                        <!-- 操作按钮 -->
-                        <div class="action-buttons">
-                            <button id="autoTimeBtn" class="small-btn">🔄 更新</button>
-                            <button id="autoLocationBtn" class="small-btn">📍 定位</button>
-                        </div>
+                <!-- 天干地支和节气显示 - 直接显示,无面板 -->
+                <div class="ganzhi-solar-term-row">
+                    <div class="ganzhi-display" id="ganzhiDisplay">
+                        正在计算天干地支、节气和农历...
                     </div>
+                </div>
+
+                <!-- 日期时间位置天气综合行 -->
+                <div class="compact-info-row">
+                    <div class="compact-item">
+                        <label>黄历</label>
+                        <input type="date" id="dateInput" class="compact-input">
+                    </div>
+                    <div class="compact-item">
+                        <label>时辰</label>
+                        <input type="time" id="timeInput" class="compact-input">
+                    </div>
+                    <div class="compact-item">
+                        <label>天地</label>
+                        <select id="locationSelect" class="compact-select">
+                            <option value="北京">北京</option>
+                            <option value="上海">上海</option>
+                            <option value="广州">广州</option>
+                            <option value="深圳">深圳</option>
+                            <option value="杭州">杭州</option>
+                            <option value="成都">成都</option>
+                            <option value="重庆">重庆</option>
+                            <option value="武汉">武汉</option>
+                            <option value="西安">西安</option>
+                            <option value="南京">南京</option>
+                            <option value="苏州">苏州</option>
+                            <option value="天津">天津</option>
+                            <option value="长沙">长沙</option>
+                            <option value="郑州">郑州</option>
+                            <option value="济南">济南</option>
+                            <option value="青岛">青岛</option>
+                            <option value="大连">大连</option>
+                            <option value="沈阳">沈阳</option>
+                            <option value="哈尔滨">哈尔滨</option>
+                            <option value="昆明">昆明</option>
+                            <option value="厦门">厦门</option>
+                            <option value="福州">福州</option>
+                            <option value="南宁">南宁</option>
+                            <option value="贵阳">贵阳</option>
+                            <option value="兰州">兰州</option>
+                            <option value="太原">太原</option>
+                            <option value="南昌">南昌</option>
+                            <option value="合肥">合肥</option>
+                            <option value="乌鲁木齐">乌鲁木齐</option>
+                            <option value="拉萨">拉萨</option>
+                            <option value="海口">海口</option>
+                            <option value="三亚">三亚</option>
+                        </select>
+                    </div>
+                    <div class="compact-item">
+                        <label>天候</label>
+                        <select id="weatherSelect" class="compact-select">
+                            <option value="晴">晴</option>
+                            <option value="多云">多云</option>
+                            <option value="阴">阴</option>
+                            <option value="雨">雨</option>
+                            <option value="雪">雪</option>
+                            <option value="雾">雾</option>
+                            <option value="大风">风</option>
+                            <option value="沙尘">尘</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="action-buttons">
+                    <button id="autoTimeBtn" class="small-btn">🔄 更新</button>
+                    <button id="autoLocationBtn" class="small-btn">📍 定位</button>
                 </div>
             </section>
 
@@ -91,11 +116,15 @@
                 <div class="diet-type">
                     <label class="radio-label">
                         <input type="radio" name="dietType" value="日常饮食" checked>
-                        <span class="radio-text">🥗 寻常饮食</span>
+                        <span class="radio-text">🥗 日常饮食</span>
                     </label>
                     <label class="radio-label">
                         <input type="radio" name="dietType" value="药膳饮食">
                         <span class="radio-text">🏮 药膳调理</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="dietType" value="茶饮推荐">
+                        <span class="radio-text">🍵 茶饮养生</span>
                     </label>
                 </div>
             </section>

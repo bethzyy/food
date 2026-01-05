@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>节气测试</title>
+</head>
+<body>
+    <h1>节气计算测试</h1>
+    <div id="result"></div>
+
+    <script src="app.js"></script>
+    <script>
+        const calendar = new ChineseCalendar();
+
+        // 测试今天(2026-01-05)
+        const today = new Date(2026, 0, 5);
+        const term = calendar.getCurrentSolarTerm(today);
+
+        document.getElementById('result').innerHTML = `
+            <p>测试日期: 2026-01-05</p>
+            <p>计算结果节气: ${term.name}</p>
+            <p>期望: 小寒</p>
+            <hr>
+            <p>getSolarTermForDate结果:</p>
+            <pre>${JSON.stringify(term, null, 2)}</pre>
+        `;
+    </script>
+</body>
+</html>
