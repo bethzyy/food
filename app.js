@@ -115,38 +115,77 @@ class ChineseCalendar {
         };
     }
 
-    // 动态计算当前节气（基于太阳黄经，改进算法）
+    // 动态计算当前节气 - 使用lunar-javascript库
     getCurrentSolarTerm(date) {
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
+        try {
+            // 使用lunar库获取精确的节气
+            const solar = Solar.fromDate(date);
+            const lunar = solar.getLunar();
 
-        // 使用每个节气的日期范围来判断
-        // 这样更准确,避免累积误差
-        for (let i = 0; i < this.solarTerms.length; i++) {
-            const term = this.solarTerms[i];
-            const termMonth = term.month;
-            const [dayStart, dayEnd] = term.dayRange;
+            // 获取上一个节气
+            const prevJie = lunar.getPrevJie(false);
+            // 获取下一个节气
+            const nextJie = lunar.getNextJie(false);
 
-            // 检查日期是否在该节气的范围内
-            if (month === termMonth && day >= dayStart && day <= dayEnd) {
-                return term;
+            let result = null;
+
+            if (prevJie) {
+                // 计算当前日期距离上一个节气的天数
+                const prevJieDate = Solar.fromYmd(
+                    prevJie.getYear(),
+                    prevJie.getMonth(),
+                    prevJie.getDay()
+                ).toDate();
+
+                const daysDiff = Math.floor((date - prevJieDate) / (1000 * 60 * 60 * 24));
+
+                // 如果距离上一个节气0-14天,说明当前在这个节气期间
+                // 但只有在2天以内才显示节气
+                if (daysDiff >= 0 && daysDiff < 15) {
+                    // 只有当天或前后1-2天距离节气2天以内才显示
+                    if (daysDiff <= 2) {
+                        result = {
+                            name: prevJie.getName(),
+                            month: prevJie.getMonth(),
+                            dayRange: [prevJie.getDay(), prevJie.getDay()]
+                        };
+                    }
+                }
             }
+
+            // 检查下一个节气是否在2天以内
+            if (nextJie && !result) {
+                const nextJieDate = Solar.fromYmd(
+                    nextJie.getYear(),
+                    nextJie.getMonth(),
+                    nextJie.getDay()
+                ).toDate();
+
+                const daysDiff = Math.floor((nextJieDate - date) / (1000 * 60 * 60 * 24));
+
+                // 如果下一个节气在2天以内,显示
+                if (daysDiff >= 0 && daysDiff <= 2) {
+                    result = {
+                        name: nextJie.getName(),
+                        month: nextJie.getMonth(),
+                        dayRange: [nextJie.getDay(), nextJie.getDay()]
+                    };
+                }
+            }
+
+            return result;
+        } catch (error) {
+            console.error('节气计算错误:', error);
+            // 降级到简化算法
+            return this.fallbackGetSolarTerm(date);
         }
+    }
 
-        // 如果没有精确匹配,使用距离计算作为后备
-        const baseDate = new Date(2024, 2, 20); // 2024年春分（基准）
-        const diffTime = date - baseDate;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        // 每个节气大约15.22天
-        const termDays = 15.22;
-        const termIndex = Math.floor(diffDays / termDays);
-
-        // 调整到0-23范围
-        let adjustedIndex = ((termIndex % 24) + 24) % 24;
-
-        return this.solarTerms[adjustedIndex];
+    // 降级算法(当lunar库不可用时) - 也遵守2天规则
+    fallbackGetSolarTerm(date) {
+        // 简化处理:降级算法不计算节气,直接返回null
+        // 避免显示不准确的节气信息
+        return null;
     }
 
     // 判断是否在节气期间
@@ -364,14 +403,30 @@ class FoodRecommendationApp {
         });
 
         // 日期变化时更新天干地支、农历、节气和季节背景
-        document.getElementById('dateInput').addEventListener('change', () => {
+        const dateInput = document.getElementById('dateInput');
+        dateInput.addEventListener('change', () => {
             this.updateSolarTermDisplay();
             this.detectAndSetSeason();
         });
+        // 添加 input 事件监听器，确保实时更新
+        dateInput.addEventListener('input', () => {
+            // 使用 setTimeout 确保日期值已更新
+            setTimeout(() => {
+                this.updateSolarTermDisplay();
+                this.detectAndSetSeason();
+            }, 10);
+        });
 
         // 时间变化时更新天干地支、时辰、农历和节气
-        document.getElementById('timeInput').addEventListener('change', () => {
+        const timeInput = document.getElementById('timeInput');
+        timeInput.addEventListener('change', () => {
             this.updateSolarTermDisplay();
+        });
+        // 添加 input 事件监听器，确保实时更新
+        timeInput.addEventListener('input', () => {
+            setTimeout(() => {
+                this.updateSolarTermDisplay();
+            }, 10);
         });
 
         // 生成推荐按钮
@@ -677,19 +732,24 @@ class FoodRecommendationApp {
         tomorrow.setDate(tomorrow.getDate() + 1);
         const yesterday = new Date(date);
         yesterday.setDate(yesterday.getDate() - 1);
+        const dayBeforeYesterday = new Date(date);
+        dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
 
         const todayTerm = this.getSolarTermForDate(today);
         const tomorrowTerm = this.getSolarTermForDate(tomorrow);
         const yesterdayTerm = this.getSolarTermForDate(yesterday);
+        const dayBeforeYesterdayTerm = this.getSolarTermForDate(dayBeforeYesterday);
 
-        // 构建节气信息
+        // 构建节气信息 - 优先级：今日 > 昨日 > 前日 > 明日
         let termInfo = '';
         if (todayTerm) {
             termInfo = `  ✨ 今日${todayTerm.name} ✨`;
-        } else if (tomorrowTerm) {
-            termInfo = `  📅 明日${tomorrowTerm.name}`;
         } else if (yesterdayTerm) {
             termInfo = `  📅 昨日${yesterdayTerm.name}`;
+        } else if (dayBeforeYesterdayTerm) {
+            termInfo = `  📅 前日${dayBeforeYesterdayTerm.name}`;
+        } else if (tomorrowTerm) {
+            termInfo = `  📅 明日${tomorrowTerm.name}`;
         } else {
             termInfo = `  · ${solarTerm.name}`;
         }
@@ -743,25 +803,31 @@ class FoodRecommendationApp {
         }
     }
 
-    // 获取附近的节气（今天、昨天或明天）
+    // 获取附近的节气（今天、昨天、前天或明天）
     getNearbySolarTerm(date) {
         const today = new Date(date);
         const tomorrow = new Date(date);
         tomorrow.setDate(tomorrow.getDate() + 1);
         const yesterday = new Date(date);
         yesterday.setDate(yesterday.getDate() - 1);
+        const dayBeforeYesterday = new Date(date);
+        dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
 
         // 优先返回今天的节气
         const todayTerm = this.getSolarTermForDate(today);
         if (todayTerm) return todayTerm;
 
-        // 其次返回明天的节气
-        const tomorrowTerm = this.getSolarTermForDate(tomorrow);
-        if (tomorrowTerm) return tomorrowTerm;
-
-        // 最后返回昨天的节气
+        // 其次返回昨天的节气
         const yesterdayTerm = this.getSolarTermForDate(yesterday);
         if (yesterdayTerm) return yesterdayTerm;
+
+        // 然后返回前天的节气
+        const dayBeforeYesterdayTerm = this.getSolarTermForDate(dayBeforeYesterday);
+        if (dayBeforeYesterdayTerm) return dayBeforeYesterdayTerm;
+
+        // 最后返回明天的节气
+        const tomorrowTerm = this.getSolarTermForDate(tomorrow);
+        if (tomorrowTerm) return tomorrowTerm;
 
         return null;
     }
@@ -808,45 +874,84 @@ class FoodRecommendationApp {
         return null;
     }
 
-    // 设置节气背景图
+    // 设置节气背景图（优先使用本地图片，否则使用渐变背景）
     setSolarTermBackground(solarTermName, container) {
         if (!container) return;
 
-        // 24节气背景图URL（使用Unsplash等免费图库）
-        const solarTermImages = {
-            '立春': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80', // 春天发芽
-            '雨水': 'https://images.unsplash.com/photo-1518173946687-a4c036bc6c9f?w=1920&q=80', // 春雨
-            '惊蛰': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80', // 春雷山景
-            '春分': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80', // 春季花朵
-            '清明': 'https://images.unsplash.com/photo-1527525443983-6e60c75fff46?w=1920&q=80', // 清明绿意
-            '谷雨': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80', // 谷雨田园
-            '立夏': 'https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=1920&q=80', // 初夏阳光
-            '小满': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1920&q=80', // 麦田
-            '芒种': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80', // 农耕
-            '夏至': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80', // 夏日绿野
-            '小暑': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80', // 夏日荷塘
-            '大暑': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80', // 盛夏海滩
-            '立秋': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80', // 初秋山景
-            '处暑': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1920&q=80', // 夏末秋初
-            '白露': 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=80', // 秋露
-            '秋分': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80', // 秋分金黄
-            '寒露': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80', // 深秋
-            '霜降': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80', // 霜秋
-            '立冬': 'https://images.unsplash.com/photo-1483664852095-d6cc6870705d?w=1920&q=80', // 初冬
-            '小雪': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=1920&q=80', // 小雪
-            '大雪': 'https://images.unsplash.com/photo-1483347752404-cbf69f21f402?w=1920&q=80', // 大雪
-            '冬至': 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1920&q=80', // 冬至雪景
-            '小寒': 'https://images.unsplash.com/photo-1518182170546-0764ce7c6a6a?w=1920&q=80', // 小寒
-            '大寒': 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?w=1920&q=80'  // 大寒
+        // 尝试使用本地图片
+        const imagePath = `images/festival_art/${solarTermName}.png`;
+
+        // 创建Image对象预加载图片
+        const img = new Image();
+        img.onload = () => {
+            // 图片加载成功，使用背景图
+            container.style.background = `url(${imagePath}) center/cover no-repeat`;
+            container.style.transition = 'background 0.5s ease';
+            console.log(`✓ 使用本地图片背景: ${solarTermName}`);
         };
 
-        const imageUrl = solarTermImages[solarTermName];
-        if (imageUrl) {
-            container.style.backgroundImage = `url('${imageUrl}')`;
-            container.style.backgroundSize = 'cover';
-            container.style.backgroundPosition = 'center';
-            container.style.backgroundAttachment = 'fixed';
-            container.style.transition = 'background-image 0.5s ease';
+        img.onerror = () => {
+            // 图片加载失败，使用渐变背景
+            this.applyGradientBackground(solarTermName, container);
+        };
+
+        // 开始加载图片
+        img.src = imagePath;
+    }
+
+    // 应用渐变背景（当本地图片不存在时使用）
+    applyGradientBackground(solarTermName, container) {
+        // 24节气中国风渐变背景（精致配色，体现节气意境）
+        const solarTermGradients = {
+            '立春': 'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)',      // 春竹新生
+            '雨水': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',      // 春雨绵绵
+            '惊蛰': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',      // 春雷始鸣
+            '春分': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',      // 春分百花
+            '清明': 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',      // 清明雨纷纷
+            '谷雨': 'linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)',      // 谷雨播种
+            '立夏': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',      // 立夏繁茂
+            '小满': 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)',      // 小满麦粒
+            '芒种': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',      // 芒种播种
+            '夏至': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',      // 夏至阳极
+            '小暑': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',      // 小暑热浪
+            '大暑': 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',      // 大暑荷花
+            '立秋': 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',      // 立秋暑去
+            '处暑': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',      // 处暑夏尽
+            '白露': 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',      // 白露成霜
+            '秋分': 'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',      // 秋分平衡
+            '寒露': 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',      // 寒露深秋
+            '霜降': 'linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)',      // 霜降露霜
+            '立冬': 'linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%)',      // 立冬收藏
+            '小雪': 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',      // 小雪寒意
+            '大雪': 'linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%)',      // 大雪银装
+            '冬至': 'linear-gradient(135deg, #c7c9d8 0%, #d7dde8 100%)',      // 冬至阳生
+            '小寒': 'linear-gradient(135deg, #e6dada 0%, #274046 100%)',      // 小寒严寒
+            '大寒': 'linear-gradient(135deg, #c9d6ff 0%, #e2e2e2 100%)',      // 大寒腊八
+            '龙抬头': 'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)'     // 龙抬头（二月二）
+        };
+
+        // 传统节日中国风渐变背景
+        const festivalGradients = {
+            '春节': 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)',      // 春节红妆
+            '小年': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',      // 小年祭灶
+            '元宵节': 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)',    // 元宵灯火
+            '清明节': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',    // 清明踏青
+            '端午节': 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',    // 端午粽香
+            '七夕节': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',    // 七夕乞巧
+            '中秋节': 'linear-gradient(135deg, #2c3e50 0%, #fd746c 100%)',    // 中秋月圆
+            '重阳节': 'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',    // 重阳登高
+            '腊八节': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',    // 腊八粥香
+            '除夕': 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',      // 除夕守岁
+            '寒食节': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',    // 寒食禁火
+            '中元节': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)'     // 中元节
+        };
+
+        // 优先使用节日背景，然后是节气背景
+        const gradient = festivalGradients[solarTermName] || solarTermGradients[solarTermName];
+        if (gradient) {
+            container.style.background = gradient;
+            container.style.transition = 'background 0.5s ease';
+            console.log(`✓ 使用渐变背景: ${solarTermName}`);
         }
     }
 
@@ -857,10 +962,13 @@ class FoodRecommendationApp {
         tomorrow.setDate(tomorrow.getDate() + 1);
         const yesterday = new Date(date);
         yesterday.setDate(yesterday.getDate() - 1);
+        const dayBeforeYesterday = new Date(date);
+        dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
 
         return this.getSolarTermForDate(today) !== null ||
                this.getSolarTermForDate(tomorrow) !== null ||
-               this.getSolarTermForDate(yesterday) !== null;
+               this.getSolarTermForDate(yesterday) !== null ||
+               this.getSolarTermForDate(dayBeforeYesterday) !== null;
     }
 
     // 获取指定日期的节气（如果在节气期间返回节气对象，否则返回null）
@@ -924,13 +1032,18 @@ class FoodRecommendationApp {
             resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // 显示加载动画,包含模型信息
+        // 显示加载动画,包含步骤进度
         loadingSpinner.style.display = 'block';
         loadingSpinner.innerHTML = `
             <div class="spinner"></div>
-            <p class="loading-text">🤖 正在调用AI模型生成推荐...</p>
-            <p class="loading-subtext">尝试模型: GLM-4.7 → GLM-4.6 → GLM-4-Flash</p>
-            <p class="loading-hint">⏰ 预计需要10-30秒，请耐心等待</p>
+            <p class="loading-text">🤖 正在生成推荐...</p>
+            <div class="loading-steps">
+                <div class="step active" id="step1">✓ 收集信息</div>
+                <div class="step" id="step2">○ 分析节气</div>
+                <div class="step" id="step3">○ AI生成推荐</div>
+                <div class="step" id="step4">○ 整理结果</div>
+            </div>
+            <p class="loading-hint">⏰ 预计需要5-15秒</p>
         `;
         recommendationContent.innerHTML = '';
         document.getElementById('nutritionCard').style.display = 'none';
@@ -944,6 +1057,9 @@ class FoodRecommendationApp {
 
         console.log('用户输入:', { dateInput, timeInput, mealPeriod, dietType, weather });
 
+        // 更新步骤1完成
+        this.updateLoadingStep(2);
+
         // 解析日期
         const date = new Date(dateInput);
         const solarTerm = this.chineseCalendar.getCurrentSolarTerm(date);
@@ -951,8 +1067,11 @@ class FoodRecommendationApp {
 
         console.log('节气信息:', { solarTerm: solarTerm.name, season: this.getSeasonName(season) });
 
+        // 更新步骤2完成
+        this.updateLoadingStep(3);
+
         try {
-            // 调用API生成推荐 (自动降级: 4.7 -> 4.6 -> flash)
+            // 调用API生成推荐 (优先使用快速模型: flash -> 4.6 -> 4.7)
             const recommendation = await this.callGLMAPIWithFallback({
                 date: dateInput,
                 time: timeInput,
@@ -964,6 +1083,9 @@ class FoodRecommendationApp {
             });
 
             console.log('API调用成功,返回推荐:', recommendation);
+
+            // 更新步骤3完成
+            this.updateLoadingStep(4);
 
             // 隐藏加载动画
             loadingSpinner.style.display = 'none';
@@ -995,13 +1117,38 @@ class FoodRecommendationApp {
         }
     }
 
-    // 带自动降级的API调用
+    // 更新加载步骤显示
+    updateLoadingStep(stepNumber) {
+        const steps = document.querySelectorAll('.step');
+        steps.forEach((step, index) => {
+            if (index + 1 < stepNumber) {
+                step.classList.remove('active');
+                step.classList.add('completed');
+                step.innerHTML = `✓ ${step.textContent.replace(/^[✓○]\s*/, '')}`;
+            } else if (index + 1 === stepNumber) {
+                step.classList.add('active');
+                step.classList.remove('completed');
+                step.innerHTML = `→ ${step.textContent.replace(/^[✓○→]\s*/, '')}`;
+            } else {
+                step.classList.remove('active', 'completed');
+            }
+        });
+    }
+
+    // 带自动降级的API调用（优先使用快速模型）
     async callGLMAPIWithFallback(params) {
-        const models = ['glm-4.7', 'glm-4.6', 'glm-4-flash'];
+        // 优化：先使用最快的flash模型，然后是4.6，最后是4.7
+        const models = ['glm-4-flash', 'glm-4.6', 'glm-4.7'];
 
         for (let i = 0; i < models.length; i++) {
             const model = models[i];
             console.log(`尝试使用模型: ${model} (${i + 1}/${models.length})`);
+
+            // 更新加载提示
+            const loadingText = document.querySelector('.loading-text');
+            if (loadingText) {
+                loadingText.textContent = `🤖 使用模型 ${model} 生成推荐...`;
+            }
 
             try {
                 const result = await this.callGLMAPI({ ...params, model });
@@ -1011,7 +1158,7 @@ class FoodRecommendationApp {
                 console.error(`❌ 模型 ${model} 调用失败:`, error.message);
 
                 if (i < models.length - 1) {
-                    console.log(`⏳ 自动降级到下一个模型: ${models[i + 1]}`);
+                    console.log(`⏳ 自动切换到下一个模型: ${models[i + 1]}`);
                 } else {
                     throw new Error(`所有模型都失败了。最后错误: ${error.message}`);
                 }
@@ -1358,7 +1505,14 @@ class FoodRecommendationApp {
         let dishesHtml = '<div class="dish-grid">';
 
         if (recommendation.dishes && recommendation.dishes.length > 0) {
-            recommendation.dishes.forEach((dish, index) => {
+            // 排序：主食放在最后
+            const sortedDishes = [...recommendation.dishes].sort((a, b) => {
+                if (a.type === '主食') return 1;
+                if (b.type === '主食') return -1;
+                return 0;
+            });
+
+            sortedDishes.forEach((dish, index) => {
                 // 获取菜品类型(不使用emoji和标签)
                 const typeInfo = {
                     '汤品': { emoji: '', name: '', label: '' },
@@ -1406,22 +1560,22 @@ class FoodRecommendationApp {
                             <p class="value">${ingredientsText}</p>
                         </div>
 
-                        ${dish.suitable ? `
                         <div class="dish-suitable">
-                            <p class="label">👥 宜食</p>
-                            <p class="value">${dish.suitable}</p>
-                        </div>
-                        ` : ''}
-
-                        <button class="toggle-recipe" onclick="app.toggleRecipe(${index})">
-                            📜 查看制法
-                        </button>
-
-                        <div class="recipe-content" id="recipe-${index}" style="display: none;">
-                            <div class="recipe-steps">
+                            <p class="label">🍳 制作方法</p>
+                            <div class="value">
                                 ${Array.isArray(dish.recipe) ? dish.recipe.map((step, i) =>
-                                    `<div class="recipe-step"><span class="step-num">${['壹','贰','叁','肆','伍','陆','柒','捌','玖','拾'][i]}</span>${step}</div>`
+                                    `<p class="recipe-step-inline">${i + 1}. ${step}</p>`
                                 ).join('') : ''}
+                            </div>
+                        </div>
+
+                        <div class="dish-suitable">
+                            <p class="label">💡 推荐理由</p>
+                            <div class="value">
+                                ${recommendation.reasoning && recommendation.reasoning.solarTerm ? `<p>${recommendation.reasoning.solarTerm}</p>` : ''}
+                                ${recommendation.reasoning && recommendation.reasoning.season ? `<p>${recommendation.reasoning.season}</p>` : ''}
+                                ${recommendation.reasoning && recommendation.reasoning.weather ? `<p>${recommendation.reasoning.weather}</p>` : ''}
+                                ${dish.reasoning ? `<p>${dish.reasoning}</p>` : ''}
                             </div>
                         </div>
                     </div>
@@ -1430,79 +1584,6 @@ class FoodRecommendationApp {
         }
 
         dishesHtml += '</div>';
-
-        // 添加推荐理由 - 使用雅致标题
-        if (recommendation.reasoning) {
-            dishesHtml += `
-                <div class="reasoning-card">
-                    <h3 class="card-title">📜 推荐缘由</h3>
-                    <div class="reasoning-content">
-                        ${recommendation.reasoning.solarTerm ? `
-                        <div class="reason-item">
-                            <span class="reason-icon">🌸</span>
-                            <div>
-                                <p class="reason-label">节气养生</p>
-                                <p class="reason-text">${recommendation.reasoning.solarTerm}</p>
-                            </div>
-                        </div>
-                        ` : ''}
-                        ${recommendation.reasoning.season ? `
-                        <div class="reason-item">
-                            <span class="reason-icon">🍂</span>
-                            <div>
-                                <p class="reason-label">四时调养</p>
-                                <p class="reason-text">${recommendation.reasoning.season}</p>
-                            </div>
-                        </div>
-                        ` : ''}
-                        ${recommendation.reasoning.weather ? `
-                        <div class="reason-item">
-                            <span class="reason-icon">🌤️</span>
-                            <div>
-                                <p class="reason-label">天时调摄</p>
-                                <p class="reason-text">${recommendation.reasoning.weather}</p>
-                            </div>
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        // 添加温馨提示 - 使用雅致标题
-        if (recommendation.tips) {
-            dishesHtml += `
-                <div class="tips-card">
-                    <h3 class="card-title">🌿 养生要诀</h3>
-                    <div class="tips-grid">
-                        ${recommendation.tips.shopping ? `
-                        <div class="tip-item">
-                            <span class="tip-icon">🛒</span>
-                            <p>${recommendation.tips.shopping}</p>
-                        </div>
-                        ` : ''}
-                        ${recommendation.tips.cooking ? `
-                        <div class="tip-item">
-                            <span class="tip-icon">🍳</span>
-                            <p>${recommendation.tips.cooking}</p>
-                        </div>
-                        ` : ''}
-                        ${recommendation.tips.pairing ? `
-                        <div class="tip-item">
-                            <span class="tip-icon">🍵</span>
-                            <p>${recommendation.tips.pairing}</p>
-                        </div>
-                        ` : ''}
-                        ${recommendation.tips.taboo ? `
-                        <div class="tip-item">
-                            <span class="tip-icon">⚠️</span>
-                            <p>${recommendation.tips.taboo}</p>
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }
 
         recommendationContent.innerHTML = dishesHtml;
 
@@ -1675,14 +1756,11 @@ class FoodRecommendationApp {
                         </div>
                         ` : ''}
 
-                        <button class="toggle-recipe" onclick="app.toggleRecipe(${index})">
-                            📜 查看制法
-                        </button>
-
-                        <div class="recipe-content" id="recipe-${index}" style="display: none;">
-                            <div class="recipe-steps">
+                        <div class="dish-suitable">
+                            <p class="label">🍳 制作方法</p>
+                            <div class="value">
                                 ${Array.isArray(tea.method) ? tea.method.map((step, i) =>
-                                    `<div class="recipe-step"><span class="step-num">${['壹','贰','叁','肆','伍'][i]}</span>${step}</div>`
+                                    `<p class="recipe-step-inline">${i + 1}. ${step}</p>`
                                 ).join('') : ''}
                             </div>
                         </div>

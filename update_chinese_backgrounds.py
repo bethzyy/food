@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+生成中国风背景SVG图案
+包含24节气和传统节气的背景图案
+"""
+
+from pathlib import Path
+import json
+
+images_dir = Path(__file__).parent / 'images' / 'festival_art'
+
+# 24节气的中国风SVG渐变背景
+solar_term_backgrounds = {
+    '立春': {
+        'gradient': 'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)',
+        'pattern': 'spring_bamboo',
+        'description': '春竹新生，绿意盎然'
+    },
+    '雨水': {
+        'gradient': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
+        'pattern': 'rain_drops',
+        'description': '春雨绵绵，滋润万物'
+    },
+    '惊蛰': {
+        'gradient': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+        'pattern': 'thunder_spring',
+        'description': '春雷始鸣，万物复苏'
+    },
+    '春分': {
+        'gradient': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+        'pattern': 'spring_flowers',
+        'description': '春分时节，百花盛开'
+    },
+    '清明': {
+        'gradient': 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
+        'pattern': 'qingming_mist',
+        'description': '清明时节雨纷纷'
+    },
+    '谷雨': {
+        'gradient': 'linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)',
+        'pattern': 'grain_rain',
+        'description': '谷雨时节，播种希望'
+    },
+    '立夏': {
+        'gradient': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+        'pattern': 'summer_start',
+        'description': '立夏时节，万物繁茂'
+    },
+    '小满': {
+        'gradient': 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)',
+        'pattern': 'grain_full',
+        'description': '小满时节，麦粒渐满'
+    },
+    '芒种': {
+        'gradient': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'pattern': 'planting_rice',
+        'description': '芒种时节，忙于播种'
+    },
+    '夏至': {
+        'gradient': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        'pattern': 'summer_solstice',
+        'description': '夏至阳极，阴气始生'
+    },
+    '小暑': {
+        'gradient': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+        'pattern': 'summer_heat',
+        'description': '小暑将至，热浪初起'
+    },
+    '大暑': {
+        'gradient': 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',
+        'pattern': 'great_heat',
+        'description': '大暑炎热，荷花盛开'
+    },
+    '立秋': {
+        'gradient': 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+        'pattern': 'autumn_start',
+        'description': '立秋时节，暑去凉来'
+    },
+    '处暑': {
+        'gradient': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+        'pattern': 'heat_ends',
+        'description': '处暑时节，夏热将尽'
+    },
+    '白露': {
+        'gradient': 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+        'pattern': 'white_dew',
+        'description': '白露为霜，秋意渐浓'
+    },
+    '秋分': {
+        'gradient': 'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',
+        'pattern': 'autumn_equinox',
+        'description': '秋分平分，阴阳平衡'
+    },
+    '寒露': {
+        'gradient': 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+        'pattern': 'cold_dew',
+        'description': '寒露凝结，深秋已至'
+    },
+    '霜降': {
+        'gradient': 'linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)',
+        'pattern': 'frost_descent',
+        'description': '霜降时节，露水成霜'
+    },
+    '立冬': {
+        'gradient': 'linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%)',
+        'pattern': 'winter_start',
+        'description': '立冬时节，万物收藏'
+    },
+    '小雪': {
+        'gradient': 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+        'pattern': 'light_snow',
+        'description': '小雪纷纷，寒意渐浓'
+    },
+    '大雪': {
+        'gradient': 'linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%)',
+        'pattern': 'heavy_snow',
+        'description': '大雪纷飞，银装素裹'
+    },
+    '冬至': {
+        'gradient': 'linear-gradient(135deg, #c7c9d8 0%, #d7dde8 100%)',
+        'pattern': 'winter_solstice',
+        'description': '冬至阳生，一阳复始'
+    },
+    '小寒': {
+        'gradient': 'linear-gradient(135deg, #e6dada 0%, #274046 100%)',
+        'pattern': 'little_cold',
+        'description': '小寒时节，三九严寒'
+    },
+    '大寒': {
+        'gradient': 'linear-gradient(135deg, #c9d6ff 0%, #e2e2e2 100%)',
+        'pattern': 'great_cold',
+        'description': '大寒极冷，腊八迎春'
+    }
+}
+
+# 传统节日的中国风背景
+festival_backgrounds = {
+    '春节': {
+        'gradient': 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)',
+        'pattern': 'spring_festival',
+        'description': '春节红妆，万象更新'
+    },
+    '小年': {
+        'gradient': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'pattern': 'little_new_year',
+        'description': '小年祭灶，辞旧迎新'
+    },
+    '元宵节': {
+        'gradient': 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)',
+        'pattern': 'lantern_festival',
+        'description': '元宵灯火，团圆美满'
+    },
+    '清明节': {
+        'gradient': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
+        'pattern': 'qingming',
+        'description': '清明踏青，缅怀先人'
+    },
+    '端午节': {
+        'gradient': 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',
+        'pattern': 'dragon_boat',
+        'description': '端午粽香，龙舟竞渡'
+    },
+    '七夕节': {
+        'gradient': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+        'pattern': 'qixi',
+        'description': '七夕乞巧，鹊桥相会'
+    },
+    '中秋节': {
+        'gradient': 'linear-gradient(135deg, #2c3e50 0%, #fd746c 100%)',
+        'pattern': 'mid_autumn',
+        'description': '中秋月圆，人团圆'
+    },
+    '重阳节': {
+        'gradient': 'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',
+        'pattern': 'double_ninth',
+        'description': '重阳登高，敬老思亲'
+    },
+    '腊八节': {
+        'gradient': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+        'pattern': 'laba',
+        'description': '腊八粥香，年味渐浓'
+    },
+    '除夕': {
+        'gradient': 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',
+        'pattern': 'chuxi',
+        'description': '除夕守岁，辞旧迎新'
+    },
+    '祭灶节': {
+        'gradient': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'pattern': 'zao',
+        'description': '祭灶送神，祈求平安'
+    },
+    '寒食节': {
+        'gradient': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+        'pattern': 'hanshi',
+        'description': '寒食禁火，冷食寄情'
+    },
+    '上巳节': {
+        'gradient': 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
+        'pattern': 'shangsi',
+        'description': '上巳踏青，曲水流觞'
+    }
+}
+
+# 生成JSON配置文件
+config = {
+    'solar_terms': solar_term_backgrounds,
+    'festivals': festival_backgrounds
+}
+
+# 保存配置文件
+config_file = Path(__file__).parent / 'images' / 'chinese_backgrounds.json'
+with open(config_file, 'w', encoding='utf-8') as f:
+    json.dump(config, f, ensure_ascii=False, indent=2)
+
+print("=" * 60)
+print("中国风背景配置文件已生成")
+print("=" * 60)
+print(f"配置文件: {config_file}")
+print(f"包含: {len(solar_term_backgrounds)} 个节气 + {len(festival_backgrounds)} 个传统节日")
+print("=" * 60)

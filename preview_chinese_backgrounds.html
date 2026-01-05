@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国风节气节日背景预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .test-card {
+            height: 200px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .test-card .name {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .test-card .desc {
+            font-size: 14px;
+            font-weight: normal;
+            opacity: 0.9;
+        }
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin: 40px 0 20px 0;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>中国风节气和节日背景预览</h1>
+        <p>每个节气和节日都有独特的中国风渐变背景</p>
+    </div>
+
+    <div class="test-grid" id="testGrid"></div>
+
+    <script>
+        // 24节气背景
+        const solarTermBackgrounds = {
+            '立春': 'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)',
+            '雨水': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
+            '惊蛰': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            '春分': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+            '清明': 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
+            '谷雨': 'linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)',
+            '立夏': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            '小满': 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)',
+            '芒种': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            '夏至': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            '小暑': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            '大暑': 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',
+            '立秋': 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+            '处暑': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            '白露': 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+            '秋分': 'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',
+            '寒露': 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+            '霜降': 'linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)',
+            '立冬': 'linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%)',
+            '小雪': 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+            '大雪': 'linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%)',
+            '冬至': 'linear-gradient(135deg, #c7c9d8 0%, #d7dde8 100%)',
+            '小寒': 'linear-gradient(135deg, #e6dada 0%, #274046 100%)',
+            '大寒': 'linear-gradient(135deg, #c9d6ff 0%, #e2e2e2 100%)'
+        };
+
+        // 传统节日背景
+        const festivalBackgrounds = {
+            '春节': 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)',
+            '小年': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            '元宵节': 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)',
+            '清明节': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
+            '端午节': 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',
+            '七夕节': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            '中秋节': 'linear-gradient(135deg, #2c3e50 0%, #fd746c 100%)',
+            '重阳节': 'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',
+            '腊八节': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            '除夕': 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',
+            '祭灶节': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            '寒食节': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+            '上巳节': 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)'
+        };
+
+        // 意境描述
+        const descriptions = {
+            '立春': '春竹新生，绿意盎然',
+            '雨水': '春雨绵绵，滋润万物',
+            '惊蛰': '春雷始鸣，万物复苏',
+            '春分': '春分时节，百花盛开',
+            '清明': '清明时节雨纷纷',
+            '谷雨': '谷雨时节，播种希望',
+            '立夏': '立夏时节，万物繁茂',
+            '小满': '小满时节，麦粒渐满',
+            '芒种': '芒种时节，忙于播种',
+            '夏至': '夏至阳极，阴气始生',
+            '小暑': '小暑将至，热浪初起',
+            '大暑': '大暑炎热，荷花盛开',
+            '立秋': '立秋时节，暑去凉来',
+            '处暑': '处暑时节，夏热将尽',
+            '白露': '白露为霜，秋意渐浓',
+            '秋分': '秋分平分，阴阳平衡',
+            '寒露': '寒露凝结，深秋已至',
+            '霜降': '霜降时节，露水成霜',
+            '立冬': '立冬时节，万物收藏',
+            '小雪': '小雪纷纷，寒意渐浓',
+            '大雪': '大雪纷飞，银装素裹',
+            '冬至': '冬至阳生，一阳复始',
+            '小寒': '小寒时节，三九严寒',
+            '大寒': '大寒极冷，腊八迎春',
+            '春节': '春节红妆，万象更新',
+            '小年': '小年祭灶，辞旧迎新',
+            '元宵节': '元宵灯火，团圆美满',
+            '清明节': '清明踏青，缅怀先人',
+            '端午节': '端午粽香，龙舟竞渡',
+            '七夕节': '七夕乞巧，鹊桥相会',
+            '中秋节': '中秋月圆，人团圆',
+            '重阳节': '重阳登高，敬老思亲',
+            '腊八节': '腊八粥香，年味渐浓',
+            '除夕': '除夕守岁，辞旧迎新',
+            '祭灶节': '祭灶送神，祈求平安',
+            '寒食节': '寒食禁火，冷食寄情',
+            '上巳节': '上巳踏青，曲水流觞'
+        };
+
+        const testGrid = document.getElementById('testGrid');
+
+        // 添加节气标题
+        const solarTitle = document.createElement('div');
+        solarTitle.className = 'section-title';
+        solarTitle.textContent = '24节气';
+        testGrid.appendChild(solarTitle);
+
+        // 添加节气卡片
+        for (const [name, gradient] of Object.entries(solarTermBackgrounds)) {
+            createCard(name, gradient, descriptions[name]);
+        }
+
+        // 添加节日标题
+        const festivalTitle = document.createElement('div');
+        festivalTitle.className = 'section-title';
+        festivalTitle.textContent = '传统节日';
+        testGrid.appendChild(festivalTitle);
+
+        // 添加节日卡片
+        for (const [name, gradient] of Object.entries(festivalBackgrounds)) {
+            createCard(name, gradient, descriptions[name]);
+        }
+
+        function createCard(name, gradient, desc) {
+            const card = document.createElement('div');
+            card.className = 'test-card';
+            card.style.background = gradient;
+
+            card.innerHTML = `
+                <div class="name">${name}</div>
+                <div class="desc">${desc}</div>
+            `;
+
+            // 点击复制CSS
+            card.addEventListener('click', () => {
+                navigator.clipboard.writeText(`background: ${gradient};`);
+                alert(`已复制背景样式：\n${gradient}`);
+            });
+
+            testGrid.appendChild(card);
+        }
+    </script>
+</body>
+</html>

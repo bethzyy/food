@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>节气和传统节日背景图预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .test-image {
+            width: 100%;
+            height: 300px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        .test-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3));
+        }
+        .test-info {
+            padding: 20px;
+        }
+        .test-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .test-filename {
+            font-size: 14px;
+            color: #999;
+            font-family: monospace;
+        }
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin: 40px 0 20px 0;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            letter-spacing: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>节气和传统节日背景图预览</h1>
+        <p>所有图片已下载到本地</p>
+    </div>
+
+    <div class="test-grid" id="testGrid"></div>
+
+    <script>
+        const imagesDir = 'images/festival_art/';
+
+        // 24节气
+        const solarTerms = [
+            '立春', '雨水', '惊蛰', '春分', '清明', '谷雨',
+            '立夏', '小满', '芒种', '夏至', '小暑', '大暑',
+            '立秋', '处暑', '白露', '秋分', '寒露', '霜降',
+            '立冬', '小雪', '大雪', '冬至', '小寒', '大寒'
+        ];
+
+        // 传统节日
+        const festivals = [
+            '春节', '小年', '元宵节', '清明节', '端午节', '七夕节',
+            '中秋节', '重阳节', '腊八节', '冬至', '除夕',
+            '祭灶节', '寒食节', '上巳节'
+        ];
+
+        const testGrid = document.getElementById('testGrid');
+
+        // 添加节气标题
+        const solarTitle = document.createElement('div');
+        solarTitle.className = 'section-title';
+        solarTitle.textContent = '24节气';
+        testGrid.appendChild(solarTitle);
+
+        // 添加节气图片
+        solarTerms.forEach(name => {
+            createCard(name, `${imagesDir}${name}.jpg`, '节气');
+        });
+
+        // 添加节日标题
+        const festivalTitle = document.createElement('div');
+        festivalTitle.className = 'section-title';
+        festivalTitle.textContent = '传统节日';
+        testGrid.appendChild(festivalTitle);
+
+        // 添加节日图片
+        festivals.forEach(name => {
+            createCard(name, `${imagesDir}${name}.jpg`, '节日');
+        });
+
+        function createCard(name, imagePath, type) {
+            const card = document.createElement('div');
+            card.className = 'test-card';
+
+            card.innerHTML = `
+                <div class="test-image" style="background-image: url('${imagePath}')"></div>
+                <div class="test-info">
+                    <div class="test-name">${name}</div>
+                    <div class="test-filename">${imagePath}</div>
+                </div>
+            `;
+
+            testGrid.appendChild(card);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国风渐变背景 - 节气测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', 'SimSun', serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .test-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .test-gradient {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: 4px;
+        }
+        .test-info {
+            padding: 20px;
+            background: white;
+        }
+        .test-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .test-season {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 26px;
+            font-weight: bold;
+            color: #333;
+            margin: 30px 0 15px 0;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            letter-spacing: 3px;
+        }
+        .summary {
+            grid-column: 1 / -1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .summary h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 20px;
+        }
+        .summary p {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>中国风渐变背景</h1>
+        <p>24节气 - 水墨画风格配色</p>
+    </div>
+
+    <div class="test-grid" id="testGrid">
+        <div class="summary">
+            <h3>背景展示</h3>
+            <p>所有背景使用CSS渐变，稳定快速，不依赖外部图片</p>
+        </div>
+    </div>
+
+    <script>
+        // 24节气渐变背景
+        const solarTerms = {
+            // 春季节气
+            '立春': {
+                gradient: 'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)',
+                desc: '春绿',
+                season: '春季'
+            },
+            '雨水': {
+                gradient: 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
+                desc: '雨蓝',
+                season: '春季'
+            },
+            '惊蛰': {
+                gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                desc: '桃红',
+                season: '春季'
+            },
+            '春分': {
+                gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                desc: '天蓝',
+                season: '春季'
+            },
+            '清明': {
+                gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                desc: '青绿',
+                season: '春季'
+            },
+            '谷雨': {
+                gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                desc: '牡丹色',
+                season: '春季'
+            },
+            // 夏季节气
+            '立夏': {
+                gradient: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+                desc: '初夏',
+                season: '夏季'
+            },
+            '小满': {
+                gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+                desc: '麦黄',
+                season: '夏季'
+            },
+            '芒种': {
+                gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                desc: '芒种',
+                season: '夏季'
+            },
+            '夏至': {
+                gradient: 'linear-gradient(135deg, #ff6b6b 0%, #f06595 100%)',
+                desc: '荷红',
+                season: '夏季'
+            },
+            '小暑': {
+                gradient: 'linear-gradient(135deg, #f857a6 0%, #ff5858 100%)',
+                desc: '夏暑',
+                season: '夏季'
+            },
+            '大暑': {
+                gradient: 'linear-gradient(135deg, #f78ca0 0%, #f9748f 100%)',
+                desc: '盛夏',
+                season: '夏季'
+            },
+            // 秋季节气
+            '立秋': {
+                gradient: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                desc: '秋黄',
+                season: '秋季'
+            },
+            '处暑': {
+                gradient: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                desc: '暑去',
+                season: '秋季'
+            },
+            '白露': {
+                gradient: 'linear-gradient(135deg, #ffe259 0%, #ffa751 100%)',
+                desc: '白露',
+                season: '秋季'
+            },
+            '秋分': {
+                gradient: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                desc: '秋分',
+                season: '秋季'
+            },
+            '寒露': {
+                gradient: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+                desc: '寒露',
+                season: '秋季'
+            },
+            '霜降': {
+                gradient: 'linear-gradient(135deg, #e96443 0%, #904e95 100%)',
+                desc: '霜降',
+                season: '秋季'
+            },
+            // 冬季节气
+            '立冬': {
+                gradient: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+                desc: '立冬',
+                season: '冬季'
+            },
+            '小雪': {
+                gradient: 'linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%)',
+                desc: '小雪',
+                season: '冬季'
+            },
+            '大雪': {
+                gradient: 'linear-gradient(135deg, #c9d6ff 0%, #e2e2e2 100%)',
+                desc: '大雪',
+                season: '冬季'
+            },
+            '冬至': {
+                gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                desc: '冬至',
+                season: '冬季'
+            },
+            '小寒': {
+                gradient: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+                desc: '小寒',
+                season: '冬季'
+            },
+            '大寒': {
+                gradient: 'linear-gradient(135deg, #c2e9fb 0%, #a1c4fd 100%)',
+                desc: '大寒',
+                season: '冬季'
+            }
+        };
+
+        const testGrid = document.getElementById('testGrid');
+
+        // 添加春季部分
+        addSeasonSection('春季');
+
+        // 添加夏季部分
+        addSeasonSection('夏季');
+
+        // 添加秋季部分
+        addSeasonSection('秋季');
+
+        // 添加冬季部分
+        addSeasonSection('冬季');
+
+        function addSeasonSection(seasonName) {
+            const sectionTitle = document.createElement('div');
+            sectionTitle.className = 'section-title';
+            sectionTitle.textContent = seasonName;
+            testGrid.appendChild(sectionTitle);
+
+            for (const [name, data] of Object.entries(solarTerms)) {
+                if (data.season === seasonName) {
+                    createTestCard(name, data);
+                }
+            }
+        }
+
+        function createTestCard(name, data) {
+            const card = document.createElement('div');
+            card.className = 'test-card';
+
+            card.innerHTML = `
+                <div class="test-gradient" style="background: ${data.gradient}">
+                    ${name}
+                </div>
+                <div class="test-info">
+                    <div class="test-name">${name}</div>
+                    <div class="test-season">${data.desc} · ${data.season}</div>
+                </div>
+            `;
+
+            testGrid.appendChild(card);
+        }
+    </script>
+</body>
+</html>

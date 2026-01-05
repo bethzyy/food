@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>节气和传统节日图片测试</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .test-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+        .test-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .test-image img[src=""] {
+            display: none;
+        }
+        .test-info {
+            padding: 15px;
+        }
+        .test-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .test-url {
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+            margin-top: 5px;
+        }
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0 10px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>节气和传统节日图片测试</h1>
+
+    <div class="test-grid" id="testGrid"></div>
+
+    <script>
+        // 24节气图片
+        const solarTerms = {
+            '立春': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80',
+            '雨水': 'https://images.unsplash.com/photo-1518173946687-a4c036bc6c9f?w=1920&q=80',
+            '惊蛰': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80',
+            '春分': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80',
+            '清明': 'https://images.unsplash.com/photo-1527525443983-6e60c75fff46?w=1920&q=80',
+            '谷雨': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80',
+            '立夏': 'https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=1920&q=80',
+            '小满': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1920&q=80',
+            '芒种': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80',
+            '夏至': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=80',
+            '小暑': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80',
+            '大暑': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80',
+            '立秋': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+            '处暑': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1920&q=80',
+            '白露': 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=80',
+            '秋分': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80',
+            '寒露': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80',
+            '霜降': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80',
+            '立冬': 'https://images.unsplash.com/photo-1483664852095-d6cc6870705d?w=1920&q=80',
+            '小雪': 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=1920&q=80',
+            '大雪': 'https://images.unsplash.com/photo-1483347752404-cbf69f21f402?w=1920&q=80',
+            '冬至': 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1920&q=80',
+            '小寒': 'https://images.unsplash.com/photo-1518182170546-0764ce7c6a6a?w=1920&q=80',
+            '大寒': 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?w=1920&q=80'
+        };
+
+        // 传统节日图片
+        const festivals = {
+            '春节': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1920&q=80',
+            '元宵节': 'https://images.unsplash.com/photo-1518176258769-f227c798150e?w=1920&q=80',
+            '清明节': 'https://images.unsplash.com/photo-1527525443983-6e60c75fff46?w=1920&q=80',
+            '端午节': 'https://images.unsplash.com/photo-1533565406508-97d5cc661319?w=1920&q=80',
+            '七夕节': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+            '中秋节': 'https://images.unsplash.com/photo-1507652313519-d4e9174996cd?w=1920&q=80',
+            '重阳节': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+            '冬至': 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1920&q=80',
+            '除夕': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1920&q=80'
+        };
+
+        const testGrid = document.getElementById('testGrid');
+
+        // 添加节气部分标题
+        const solarTitle = document.createElement('div');
+        solarTitle.className = 'section-title';
+        solarTitle.textContent = '24节气图片';
+        testGrid.appendChild(solarTitle);
+
+        // 测试节气图片
+        for (const [name, url] of Object.entries(solarTerms)) {
+            createTestCard(name, url, '节气');
+        }
+
+        // 添加传统节日部分标题
+        const festivalTitle = document.createElement('div');
+        festivalTitle.className = 'section-title';
+        festivalTitle.textContent = '传统节日图片';
+        testGrid.appendChild(festivalTitle);
+
+        // 测试传统节日图片
+        for (const [name, url] of Object.entries(festivals)) {
+            createTestCard(name, url, '节日');
+        }
+
+        function createTestCard(name, url, type) {
+            const card = document.createElement('div');
+            card.className = 'test-card';
+
+            card.innerHTML = `
+                <div class="test-image">
+                    <img src="${url}" alt="${name}" onload="markSuccess(this, '${name}')" onerror="markError(this, '${name}')">
+                    <span class="placeholder">加载中...</span>
+                </div>
+                <div class="test-info">
+                    <div class="test-name">${name}</div>
+                    <div class="test-url">${url}</div>
+                    <span class="status loading" id="status-${name}">检测中...</span>
+                </div>
+            `;
+
+            testGrid.appendChild(card);
+        }
+
+        function markSuccess(img, name) {
+            const status = document.getElementById(`status-${name}`);
+            const placeholder = img.parentElement.querySelector('.placeholder');
+            if (status) {
+                status.textContent = '✅ 正常';
+                status.className = 'status success';
+            }
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+        }
+
+        function markError(img, name) {
+            const status = document.getElementById(`status-${name}`);
+            const placeholder = img.parentElement.querySelector('.placeholder');
+            if (status) {
+                status.textContent = '❌ 失败';
+                status.className = 'status error';
+            }
+            if (placeholder) {
+                placeholder.textContent = '加载失败';
+            }
+        }
+
+        // 统计结果
+        setTimeout(() => {
+            const successCount = document.querySelectorAll('.status.success').length;
+            const errorCount = document.querySelectorAll('.status.error').length;
+            const loadingCount = document.querySelectorAll('.status.loading').length;
+
+            const summary = document.createElement('div');
+            summary.className = 'section-title';
+            summary.innerHTML = `
+                测试结果统计：
+                ✅ 成功: ${successCount} |
+                ❌ 失败: ${errorCount} |
+                ⏳ 加载中: ${loadingCount}
+            `;
+            testGrid.insertBefore(summary, testGrid.firstChild);
+        }, 3000);
+    </script>
+</body>
+</html>

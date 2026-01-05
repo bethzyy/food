@@ -1,0 +1,25 @@
+失败的图片URL及其建议的替代方案：
+
+1. 雨水 (春雨)
+   失败: https://images.unsplash.com/photo-1518173946687-a4c036bc6c9f?w=1920&q=80
+   建议: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80 (山间云雾)
+
+2. 立冬 (初冬)
+   失败: https://images.unsplash.com/photo-1483664852095-d6cc6870705d?w=1920&q=80
+   建议: https://images.unsplash.com/photo-1518182170546-0764ce7c6a6a?w=1920&q=80 (冬景)
+
+3. 大雪 (雪景)
+   失败: https://images.unsplash.com/photo-1483347752404-cbf69f21f402?w=1920&q=80
+   建议: https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1920&q=80 (冬季雪景)
+
+4. 端午节 (传统节日)
+   失败: https://images.unsplash.com/photo-1533565406508-97d5cc661319?w=1920&q=80
+   建议: https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80 (山水景色)
+
+5. 中秋节 (传统节日)
+   失败: https://images.unsplash.com/photo-1507652313519-d4e9174996cd?w=1920&q=80
+   建议: https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80 (月色/秋季)
+
+6. 小寒 (寒冬)
+   失败: https://images.unsplash.com/photo-1518182170546-0764ce7c6a6a?w=1920&q=80
+   建议: https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?w=1920&q=80 (大寒冬景)

@@ -10,10 +10,8 @@ This is a **Traditional Chinese Medicine (TCM) Dietary Recommendation Web Applic
 - **TCM Ganzhi (天干地支) Calendar** - Year, month, day, and hour stem-branch system
 - **Lunar Calendar** - Chinese lunisolar calendar integration
 - **Weather conditions and geographical location** - 31 major Chinese cities
-- **Meal period** - Breakfast (晨起), Lunch (日中), Dinner (日暮)
+- **Meal period** - Breakfast (早餐), Lunch (午餐), Dinner (晚餐)
 - **Diet type** - Regular diet (日常饮食), Medicinal (药膳调理), Tea recommendations (茶饮养生)
-
-The application features an elegant Chinese aesthetic with dynamically adaptive colors based on both **season** and **solar term**, celebrating traditional Chinese culture and color theory.
 
 ## Quick Start
 
@@ -22,22 +20,19 @@ The application features an elegant Chinese aesthetic with dynamically adaptive 
 ```bash
 # Recommended: Using the unified server
 cd C:\D\CAIE_tool\MyAIProduct\food
-python app_server.py
+python -m http.server 8000
 
-# Application will auto-open at: http://localhost:8000
+# Or use server_with_env.py for environment variable support
+python server_with_env.py
 ```
 
-The unified server (`app_server.py`) provides:
-- Static file serving
-- `/api/env-api-key` endpoint for secure API key retrieval from environment variables
-- Auto-browser opening
-- Comprehensive status reporting
+Application runs at: `http://localhost:8000/index.html`
 
 ### API Key Configuration
 
 **Required**: `ZHIPU_API_KEY` environment variable
 - Format: `id.secret` (e.g., `12345.abcde67890`)
-- The app automatically fetches it via `/api/env-api-key` endpoint on load
+- The app fetches it via `/api/env-api-key` endpoint on load (if using server_with_env.py)
 - Fallback: Browser localStorage if env variable unavailable
 
 ### Setting API Key (Windows)
@@ -45,11 +40,11 @@ The unified server (`app_server.py`) provides:
 ```cmd
 # Command Prompt
 set ZHIPU_API_KEY=your-api-key-here
-python app_server.py
+python server_with_env.py
 
 # PowerShell
 $env:ZHIPU_API_KEY="your-api-key-here"
-python app_server.py
+python server_with_env.py
 ```
 
 ## Architecture
@@ -58,17 +53,18 @@ python app_server.py
 
 **Pure HTML/CSS/JavaScript** with no build process:
 
-1. **index.html** - Main UI with minimal, elegant design
-   - Simplified layout without card panels or excess borders
-   - Compact ganzhi display showing: "丙午年 丙寅月 己卯日 己巳时 2025年腊月初六 ✨ 今日小寒 ✨"
+1. **index.html** - Main UI with elegant Chinese aesthetic design
+   - Ganzhi display: "丙午年 丙寅月 己卯日 辛未时 2025年腊月初六 ✨ 今日小寒 ✨"
+   - Input controls for date, time, city, weather
+   - Diet type selection (regular/medicinal/tea)
 
-2. **style.css** (~1500 lines) - Comprehensive theming system:
+2. **style.css** (~1700 lines) - Comprehensive theming system:
    - **Four-season palettes** based on traditional Chinese color theory
-   - **24 solar term specific colors** - each节气 has unique cultural color
+   - **24 solar term specific gradient backgrounds** - each节气 has unique cultural gradient
    - **Traditional Chinese color spectrum** - 25+ traditional colors (胭脂, 古金, 碧玉, 徽墨, etc.)
-   - **Flat, minimalist design** - removed shadows, borders, and card backgrounds
+   - **Flat, minimalist design** - optimized for readability
 
-3. **app.js** (~700 lines) - Core logic with:
+3. **app.js** (~1800 lines) - Core logic with:
    - **ChineseCalendar class** - Centralized calendar calculations
    - **LogManager class** - localStorage-based logging
    - **FoodRecommendationApp class** - Main application controller
@@ -77,16 +73,15 @@ python app_server.py
 
 **Python HTTP Servers** (no server-side rendering):
 
-- **app_server.py** (recommended) - Unified server with environment variable support
-- **server_with_env.py** - Fallback with environment variable support
-- **start_server.py** - Simple HTTP server (Python 3)
+- **server_with_env.py** (recommended) - Environment variable support with `/api/env-api-key` endpoint
+- Simple HTTP server via `python -m http.server 8000`
 
 ### Prompt System
 
 **External prompt templates** with placeholder substitution:
 
-- `prompts/food_recommendation_prompt.txt` - Main diet recommendations (文言文 style)
-- `prompts/tea_recommendation_prompt.txt` - Tea and herbal beverage recommendations (文言文 style)
+- `prompts/food_recommendation_prompt.txt` - Main diet recommendations (42 lines, optimized for GLM-4.6)
+- `prompts/tea_recommendation_prompt.txt` - Tea and herbal beverage recommendations
 
 **Placeholders**: `{date}`, `{time}`, `{mealPeriod}`, `{dietType}`, `{weather}`, `{solarTerm}`, `{season}`, `{location}`
 
@@ -98,7 +93,7 @@ Centralized calculation engine for all calendar functions:
 
 ```javascript
 class ChineseCalendar {
-    // Solar to lunar conversion (simplified algorithm)
+    // Solar to lunar conversion
     solarToLunar(solarDate)
 
     // Dynamic solar term calculation based on date
@@ -106,121 +101,178 @@ class ChineseCalendar {
 
     // Ganzhi calculation (year, month, day, hour)
     calculateGanzhi(date, hours, minutes)
+
+    // Solar terms database with day ranges
+    this.solarTerms = [
+        { name: '立春', month: 2, dayRange: [3, 5] },
+        { name: '小寒', month: 1, dayRange: [5, 7] },
+        // ... all 24 solar terms
+    ]
 }
 ```
 
-**Base date reference**:
-- Lunar calendar: 2024-01-11 = 农历2023年十二月初一
-- Ganzhi: 1900-01-01 = 甲戌日
+### 2. Real-time UI Updates
 
-### 2. Dynamic Solar Term Calculation
-
-Instead of hardcoded date ranges, uses mathematical calculation:
+All date/time changes trigger immediate updates via event listeners:
 
 ```javascript
-// Base: 2024-03-20 (春分)
-// Each solar term ≈ 15.22 days
-const termDays = 15.22;
-const termIndex = Math.floor(diffDays / termDays);
-```
-
-### 3. Simplified UI Architecture
-
-**Minimalist design** - no nested card panels:
-
-```
-天时地利 Section
-├─ Ganzhi Display (plain colored bar, no container)
-├─ Input Row (date, time, city, weather)
-└─ Action Buttons
-```
-
-**CSS simplification**:
-- `.section` has `background: transparent`, `border: none`, `box-shadow: none`
-- `.ganzhi-display` is a simple colored bar with no shadows/borders
-- Content takes precedence over decoration
-
-### 4. 24-Solar Term Color System
-
-Each节气 has a unique color based on cultural and natural symbolism:
-
-**Spring**:
-- 立春 #d4a574 (杏色) - Spring awakening
-- 清明 #7fb069 (嫩绿) - Fresh growth
-- 谷雨 #5da9e9 (湖蓝) - Rain nourishing crops
-
-**Summer**:
-- 夏至 #e74c3c (朱砂) - Peak yang energy
-- 小暑 #e91e63 (荷粉) - Lotus blossoming
-- 大暑 #c0392b (丹砂) - Extreme heat
-
-**Autumn**:
-- 秋分 #fa8c16 (杏黄) - Golden harvest
-- 白露 #ecf0f1 (露白) - Morning dew (gray text)
-- 霜降 #9b59b6 (紫霜) - Frost descent
-
-**Winter**:
-- 冬至 #2d3436 (墨黑) - Peak yin, yang begins
-- 小寒 #5b8cff (黛蓝) - Deep winter cold
-- 大寒 #34495e (深蓝灰) - Extreme cold
-
-**Implementation**:
-```javascript
-// Sets data-solar-term attribute on body
-body.setAttribute('data-solar-term', '小寒');
-
-// CSS selector applies term-specific color
-body[data-solar-term="小寒"] .ganzhi-display {
-    background: #5b8cff;
+setupEventListeners() {
+    // Both 'change' and 'input' events for real-time updates
+    dateInput.addEventListener('change', () => {
+        this.updateSolarTermDisplay();
+        this.detectAndSetSeason();
+    });
+    dateInput.addEventListener('input', () => {
+        setTimeout(() => {
+            this.updateSolarTermDisplay();
+            this.detectAndSetSeason();
+        }, 10);
+    });
 }
 ```
 
-### 5. City Selection Dropdown
+### 3. Solar Term Display Logic
 
-**31 Chinese cities** available in dropdown:
-- Auto-detection on page load via geolocation
-- Attempts to match detected city to dropdown option
-- Fallback to "北京" if no match
-
-**Geolocation flow**:
-1. Browser Geolocation API → coordinates
-2. OpenStreetMap Nominatim → city name
-3. Match to dropdown list → set selected option
-4. IP-based fallback if geolocation fails
-
-### 6. Model Fallback Strategy
-
-Automatic degradation for reliability:
+Priority system for nearby solar terms:
 
 ```javascript
-const models = ['glm-4.7', 'glm-4.6', 'glm-4-flash'];
-// Tries each model in sequence until success
+// Check dates in order: 今日 > 昨日 > 前日 > 明日
+const todayTerm = this.getSolarTermForDate(today);
+const yesterdayTerm = this.getSolarTermForDate(yesterday);
+const dayBeforeYesterdayTerm = this.getSolarTermForDate(dayBeforeYesterday);
+const tomorrowTerm = this.getSolarTermForDate(tomorrow);
+
+// Build display with priority
+let termInfo = '';
+if (todayTerm) {
+    termInfo = `  ✨ 今日${todayTerm.name} ✨`;
+} else if (yesterdayTerm) {
+    termInfo = `  📅 昨日${yesterdayTerm.name}`;
+} else if (dayBeforeYesterdayTerm) {
+    termInfo = `  📅 前日${dayBeforeYesterdayTerm.name}`;
+} else if (tomorrowTerm) {
+    termInfo = `  📅 明日${tomorrowTerm.name}`;
+}
+```
+
+### 4. Chinese Style Background System
+
+**Gradient backgrounds** for each solar term and traditional festival:
+
+```javascript
+setSolarTermBackground(solarTermName, container) {
+    const solarTermGradients = {
+        '立春': 'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)',  // 春竹新生
+        '小寒': 'linear-gradient(135deg, #e6dada 0%, #274046 100%)',  // 小寒严寒
+        // ... all 24 solar terms
+    };
+
+    const festivalGradients = {
+        '春节': 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)',  // 春节红妆
+        '中秋': 'linear-gradient(135deg, #2c3e50 0%, #fd746c 100%)', // 中秋月圆
+        // ... all traditional festivals
+    };
+
+    // Priority: festivals > solar terms
+    const gradient = festivalGradients[solarTermName] || solarTermGradients[solarTermName];
+    if (gradient) {
+        container.style.background = gradient;
+        container.style.transition = 'background 0.5s ease';
+    }
+}
+```
+
+**Near-solar-term detection**: Checks today ±2 days for special UI effects.
+
+### 5. Optimized Loading Experience
+
+Multi-step loading indicator with real-time progress:
+
+```javascript
+// Loading steps display
+<div class="loading-steps">
+    <div class="step active">✓ 收集信息</div>
+    <div class="step">○ 分析节气</div>
+    <div class="step">○ AI生成推荐</div>
+    <div class="step">○ 整理结果</div>
+</div>
+
+// Update function
+updateLoadingStep(stepNumber) {
+    // Marks completed steps with ✓
+    // Marks current step with →
+    // Upcoming steps show ○
+}
+```
+
+### 6. Model Fallback Strategy (Optimized)
+
+**Fastest-first approach** for better user experience:
+
+```javascript
+const models = ['glm-4-flash', 'glm-4.6', 'glm-4.7'];
+// Prioritizes speed: flash (fastest) → 4.6 → 4.7 (slowest but best quality)
 ```
 
 **Critical Endpoint Details**:
 ```
 URL: https://open.bigmodel.cn/api/anthropic/v1/messages
-Headers: { 'x-api-key': apiKey }  // NOT Authorization: Bearer
-Format: Anthropic-compatible (NOT OpenAI)
+Headers: { 'x-api-key': apiKey }
+Format: Anthropic-compatible
+```
+
+### 7. Display Format - Recent Updates
+
+**Food Recommendation Display** (Latest Version):
+- **主食 placed last** - Sorted to display at the end
+- **Flattened structure** - All information in one panel, no nested layers
+- **制作方法 + 推荐理由** - Each dish shows both cooking method and recommendation reason
+- **No "查看制法" button** - Recipe displays directly as numbered steps
+
+```javascript
+// Sort dishes so 主食 appears last
+const sortedDishes = [...recommendation.dishes].sort((a, b) => {
+    if (a.type === '主食') return 1;
+    if (b.type === '主食') return -1;
+    return 0;
+});
+
+// Each dish card now includes:
+<div class="dish-suitable">
+    <p class="label">🍳 制作方法</p>
+    <div class="value">
+        <!-- Recipe steps displayed directly as numbered list -->
+    </div>
+</div>
+<div class="dish-suitable">
+    <p class="label">💡 推荐理由</p>
+    <div class="value">
+        <!-- Recommendation reasoning from AI -->
+    </div>
+</div>
 ```
 
 ## File Structure
 
 ```
 food/
-├── index.html                      # Minimal UI, no card panels
-├── style.css                       # ~1500 lines, 24 solar term colors
-├── app.js                          # ~700 lines core logic
-│   ├── ChineseCalendar class       # All calendar calculations
-│   ├── LogManager class             # localStorage logging
-│   └── FoodRecommendationApp       # Main app controller
+├── index.html                      # Main UI
+├── style.css                       # ~1700 lines, theming & animations
+├── app.js                          # ~1800 lines core logic
+│   ├── ChineseCalendar class       # Calendar calculations (line 0-296)
+│   ├── LogManager class             # Logging system (line 298-410)
+│   └── FoodRecommendationApp       # Main controller (line 412+)
 ├── prompts/
-│   ├── food_recommendation_prompt.txt    # Diet recommendations
+│   ├── food_recommendation_prompt.txt    # Diet recommendations (42 lines)
 │   └── tea_recommendation_prompt.txt     # Tea/herbal recommendations
-├── app_server.py                   # Unified server (recommended)
-├── server_with_env.py              # Fallback server
-├── start_server.py                 # Simple server
-└── test_*.py                       # Test scripts
+├── images/
+│   └── festival_art/              # Solar term & festival illustration storage
+│       ├── 立春.jpg
+│       ├── 小寒.jpg
+│       ├── 春节.jpg
+│       └── ... (37 total files)
+├── server_with_env.py              # Python server with env var support
+└── illustration_download_guide.html  # Manual image download guide
 ```
 
 ## Common Development Tasks
@@ -230,37 +282,46 @@ food/
 Edit prompt files in `prompts/` directory directly:
 
 **Food Recommendations**: `prompts/food_recommendation_prompt.txt`
-**Tea Recommendations**: `prompts/tea_recommendation_prompt.txt`
+- Currently 42 lines (optimized for GLM-4.6 stability)
+- Must request JSON output with specific structure
+- Key fields: dishes[], reasoning, tips, totalNutrition
 
-Keep prompts under 3000 characters. Must request JSON output with specific structure matching diet type.
+### Changing Background Colors
 
-### Changing Solar Term Colors
+Edit in `app.js` around line 878-932 (`setSolarTermBackground` method):
 
-Edit in `style.css` around line 997+:
-
-```css
-/* 小寒 - 小寒时节,三九严寒 */
-body[data-solar-term="小寒"] .ganzhi-display {
-    background: #5b8cff; /* Change this color */
-}
+```javascript
+const solarTermGradients = {
+    '小寒': 'linear-gradient(135deg, #e6dada 0%, #274046 100%)',  // Edit this
+    // ...
+};
 ```
+
+**Background System**: Uses CSS gradients instead of image files for performance and reliability.
 
 ### Adjusting Ganzhi Display Format
 
-Edit `updateGanzhiDisplay()` in `app.js` (line ~553):
+Edit `updateGanzhiDisplay()` in `app.js` (line ~724-763):
 
 ```javascript
-// Current format: "丙午年 丙寅月 己卯日 己巳时  2025年腊月初六  ✨ 今日小寒 ✨"
+// Current format: "丙午年 丙寅月 己卯日 辛未时  2025年腊月初六  ✨ 今日小寒 ✨"
 const ganzhiCompact = `${ganzhi.year} ${ganzhi.month} ${ganzhi.day} ${ganzhi.hour}`;
+const displayElement = document.getElementById('ganzhiDisplay');
+displayElement.textContent = `${ganzhiCompact}  ${lunarDate.display}${termInfo}`;
 ```
 
-### Adding New Cities
+### Adding Manual Illustrations
 
-Edit `index.html` around line 42-78, add new option:
+If users want custom illustration backgrounds instead of gradients:
 
-```html
-<option value="城市名">城市名</option>
-```
+1. Download illustrations from Baidu Images using `illustration_download_guide.html`
+2. Save to: `images/festival_art/`
+3. **Naming convention** (critical - must match exactly):
+   - 24 solar terms: `立春.jpg`, `雨水.jpg`, ..., `大寒.jpg`
+   - Traditional festivals: `春节.jpg`, `元宵节.jpg`, ..., `上巳节.jpg`
+4. Application will automatically use images if they exist, otherwise falls back to gradients
+
+**Note**: The gradient background system is recommended as it's faster, more reliable, and carries cultural meaning through color symbolism.
 
 ### Debugging
 
@@ -280,21 +341,24 @@ app.logger.clearLogs()
 **Important**: Check browser console for:
 - Solar term calculation results
 - API request/response details
-- Geolocation matching results
+- Model fallback attempts
+- Loading step updates
 
 ## Key Technical Details
 
-### Display Format
+### Solar Term Detection Range
 
-The ganzhi display shows all information in ONE line:
-```
-丙午年 丙寅月 己卯日 己巳时  2025年腊月初六  ✨ 今日小寒 ✨
-```
+Checks **±2 days** around today for special UI effects:
 
-Components:
-- **Ganzhi**: 年月日时 (without redundant shichen/time display)
-- **Lunar**:农历2025年腊月初六
-- **Solar term indicator**: ✨ 今日XX ✨ (today), 📅 明日XX (tomorrow), 📅 昨日XX (yesterday), · XX (other days)
+```javascript
+isNearSolarTerm(date) {
+    // Checks: today, tomorrow, yesterday, dayBeforeYesterday
+    return this.getSolarTermForDate(today) !== null ||
+           this.getSolarTermForDate(tomorrow) !== null ||
+           this.getSolarTermForDate(yesterday) !== null ||
+           this.getSolarTermForDate(dayBeforeYesterday) !== null;
+}
+```
 
 ### Season Detection
 
@@ -306,68 +370,68 @@ Autumn:  August 23 - November 22
 Winter:  November 23 - March 20
 ```
 
-### Solar Term Detection
-
-Dynamic calculation using base date (2024春分) and 15.22 days per term. NOT hardcoded ranges.
-
-**Near-solar-term detection**: Today ±2 days triggers special UI effects (华丽节气主题).
-
 ### Lunar Calendar Calculation
 
 Simplified algorithm with reference date:
 - Base: 2024-01-11 = 农历2023年十二月初一
 - Average 29.53 days per lunar month
-- May have slight inaccuracies but suitable for dietary recommendations
+- Suitable for dietary recommendations (not astronomically precise)
 
-## Known Issues
+## Known Issues & Solutions
 
-1. **GLM-4.7 Instability**: Sometimes returns empty content, auto-fallback to GLM-4.6 handles this
-2. **Geolocation Matching**: May not match all cities perfectly, falls back to "北京"
-3. **Lunar Calendar**: Simplified calculation, not astronomically precise
-4. **Browser Caching**: Use Ctrl+Shift+R to force refresh after code changes
+### 1. GLM-4.7 Instability
+**Problem**: GLM-4.7 sometimes returns empty content
+**Solution**: Auto-fallback to GLM-4.6, optimized model order (flash → 4.6 → 4.7)
+
+### 2. Loading Time Perception
+**Problem**: Users feel API calls take too long
+**Solution**:
+- Multi-step loading indicator with real-time progress
+- Optimized model order (flash first for speed)
+- Updated estimated time display: "5-15秒" instead of "10-30秒"
+
+### 3. Illustration vs Photo Confusion
+**Problem**: Downloaded images from free sites are mostly photos, not illustrations
+**Solution**:
+- Created gradient background system (primary)
+- Created manual download guide for users who want custom illustrations
+- Users can manually download from Baidu Images using the guide
 
 ## Design Philosophy
-
-### Minimalist Aesthetic
-
-- **Flat design**: No shadows, no borders, no card panels
-- **Content-first**: Information density over decoration
-- **Breathing room**: Spacious layout with compact elements
-- **Pure colors**: Solid backgrounds without gradients
 
 ### Chinese Cultural Integration
 
 **Color symbolism**:
 - Traditional pigments (胭脂红, 古金, 碧玉青, 徽墨)
-- Seasonal colors reflect natural phenomena
-- Solar term colors carry cultural meaning
+- Seasonal gradients reflect natural phenomena
+- Solar term gradients carry cultural meaning
 
 **Classical terminology**:
-- 黄历, 时辰, 天候, 天地 instead of modern equivalents
-- 文言文 style in prompts referencing TCM classics
+- 黄历, 时辰, 天候, 天地
 - Emphasis on "天人合一" (harmony between heaven and humanity)
+
+### User Experience Optimization
+
+**Recent improvements** (2025-01-05):
+1. **Flattened display structure** - No nested accordion panels
+2. **Real-time updates** - Immediate feedback on all input changes
+3. **Visual progress indicators** - Multi-step loading with clear status
+4. **Fastest-first model selection** - Prioritize speed over quality
+5. **Comprehensive information per dish** - All info in one place
 
 ## Testing
 
-### Manual Testing
+### Manual Testing Checklist
 
-```bash
-# Test API with full prompt
-python test_glm47_prompt.py
-
-# Test environment variable
-python test_env_key.py
-```
-
-### Test Areas
-
-1. **Solar term detection** - Try dates near each节气
+1. **Solar term detection** - Try dates near each节气 (±2 days)
 2. **Season theming** - Try dates in each season
-3. **City selection** - Test geolocation matching
-4. **Prompt loading** - Verify both food and tea prompts
-5. **API fallback** - Test with different GLM models
+3. **Real-time updates** - Change date/time and verify instant updates
+4. **Loading steps** - Verify all 4 steps complete correctly
+5. **Dish sorting** - Verify 主食 appears last in list
+6. **Model fallback** - Test with different GLM models
+7. **Background gradients** - Check all 24 solar terms + 13 festivals
 
-## Browser Compatibility
+### Browser Compatibility
 
 - Chrome/Edge (recommended)
 - Firefox
@@ -376,3 +440,10 @@ python test_env_key.py
 - Requires localStorage
 
 No polyfills included - modern browsers only.
+
+## Performance Notes
+
+- **Loading optimization**: Uses fastest model first (glm-4-flash)
+- **Gradient backgrounds**: CSS-only, no image loading overhead
+- **Event debouncing**: 10ms setTimeout for rapid input changes
+- **Step-by-step feedback**: Reduces perceived wait time

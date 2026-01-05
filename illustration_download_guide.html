@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国风插画下载指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        .header h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .header .subtitle {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.8;
+        }
+        .guide {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .guide h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        .guide ol {
+            margin-left: 20px;
+            line-height: 2;
+        }
+        .guide li {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .guide code {
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #e83e8c;
+            font-family: 'Courier New', monospace;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .card-header .name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .card-header .status {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .search-link {
+            display: block;
+            background: #667eea;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        .search-link:hover {
+            background: #5568d3;
+            transform: scale(1.02);
+        }
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 6px;
+            line-height: 1.8;
+        }
+        .file-info strong {
+            color: #333;
+        }
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            margin: 40px 0 20px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .batch-download {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .batch-download h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .batch-btn {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .batch-btn:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 中国风插画下载指南</h1>
+        <div class="subtitle">
+            为24节气和传统节日添加精美的中国风插画背景<br>
+            请按照以下步骤手动下载并保存图片
+        </div>
+    </div>
+
+    <div class="guide">
+        <h2>📖 下载步骤说明</h2>
+        <ol>
+            <li>点击下方的"🔍 在百度图片搜索"按钮</li>
+            <li>在百度图片中选择您喜欢的<strong>中国风插画</strong></li>
+            <li>右键点击图片，选择"图片另存为"</li>
+            <li>保存到项目目录：<code>C:\D\CAIE_tool\MyAIProduct\food\images\festival_art\</code></li>
+            <li>使用卡片中显示的<strong>文件名</strong>保存（例如：<code>立春.jpg</code>）</li>
+            <li>保存完成后，刷新主程序页面即可看到新背景</li>
+        </ol>
+        <p style="margin-top: 15px; color: #666; font-size: 14px;">
+            💡 <strong>提示</strong>：建议选择 <strong>国画风格、水墨画、插画</strong> 类型的图片，避免选择照片
+        </p>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="batch-download">
+        <h2>🎯 批量下载推荐网站</h2>
+        <p style="margin-bottom: 20px; color: #666;">
+            如果您想一次性下载多个插画，可以访问以下专业设计网站：
+        </p>
+        <a href="https://ibaotu.com/tupian/24ershisijieqizhongguofeng/4.html" target="_blank" class="batch-btn">
+            📦 包图网 - 24节气中国风
+        </a>
+        <a href="https://www.58pic.com/tupian-xinmeiti/24jieqichahuahaibao.html" target="_blank" class="batch-btn">
+            📦 千图网 - 24节气插画
+        </a>
+        <a href="https://616pic.com/tupian/zhongguofeng24jieqi.html" target="_blank" class="batch-btn">
+            📦 图精灵 - 中国风24节气
+        </a>
+        <a href="https://ibaotu.com/tupian/zhongguofengchuantongjieri/2.html" target="_blank" class="batch-btn">
+            📦 包图网 - 传统节日
+        </a>
+    </div>
+
+    <script>
+        const data = {
+            solarTerms: [
+                { name: '立春', keyword: '立春插画 中国风', desc: '春竹新生，绿意盎然' },
+                { name: '雨水', keyword: '雨水节气插画', desc: '春雨绵绵，滋润万物' },
+                { name: '惊蛰', keyword: '惊蛰插画 桃花', desc: '春雷始鸣，万物复苏' },
+                { name: '春分', keyword: '春分插画 花开', desc: '春分百花盛开' },
+                { name: '清明', keyword: '清明节气插画', desc: '清明雨纷纷' },
+                { name: '谷雨', keyword: '谷雨插画 谷物', desc: '谷雨播种希望' },
+                { name: '立夏', keyword: '立夏插画 初夏', desc: '立夏万物繁茂' },
+                { name: '小满', keyword: '小满插画 麦田', desc: '小满麦粒渐满' },
+                { name: '芒种', keyword: '芒种插画 农耕', desc: '芒种忙于播种' },
+                { name: '夏至', keyword: '夏至插画 荷花', desc: '夏至阳极' },
+                { name: '小暑', keyword: '小暑插画', desc: '小暑热浪初起' },
+                { name: '大暑', keyword: '大暑插画 夏日', desc: '大暑荷花盛开' },
+                { name: '立秋', keyword: '立秋插画 秋色', desc: '立秋暑去凉来' },
+                { name: '处暑', keyword: '处暑插画 秋意', desc: '处暑夏热将尽' },
+                { name: '白露', keyword: '白露插画', desc: '白露为霜' },
+                { name: '秋分', keyword: '秋分插画 金秋', desc: '秋分阴阳平衡' },
+                { name: '寒露', keyword: '寒露插画 深秋', desc: '寒露深秋已至' },
+                { name: '霜降', keyword: '霜降插画 红叶', desc: '霜降露水成霜' },
+                { name: '立冬', keyword: '立冬插画 初冬', desc: '立冬万物收藏' },
+                { name: '小雪', keyword: '小雪插画 雪景', desc: '小雪寒意渐浓' },
+                { name: '大雪', keyword: '大雪插画 雪花', desc: '大雪银装素裹' },
+                { name: '冬至', keyword: '冬至插画 冬至', desc: '冬至阳生' },
+                { name: '小寒', keyword: '小寒插画 严冬', desc: '小寒三九严寒' },
+                { name: '大寒', keyword: '大寒插画 腊八', desc: '大寒腊八迎春' }
+            ],
+            festivals: [
+                { name: '春节', keyword: '春节插画 红色', desc: '春节红妆万象' },
+                { name: '小年', keyword: '小年插画 祭灶', desc: '小年祭灶' },
+                { name: '元宵节', keyword: '元宵节插画 灯笼', desc: '元宵灯火团圆' },
+                { name: '清明节', keyword: '清明节插画', desc: '清明踏青' },
+                { name: '端午节', keyword: '端午节插画 粽子', desc: '端午粽香' },
+                { name: '七夕节', keyword: '七夕节插画', desc: '七夕乞巧' },
+                { name: '中秋节', keyword: '中秋节插画 月亮', desc: '中秋月圆' },
+                { name: '重阳节', keyword: '重阳节插画 登高', desc: '重阳登高' },
+                { name: '腊八节', keyword: '腊八节插画 粥', desc: '腊八粥香' },
+                { name: '除夕', keyword: '除夕插画 守岁', desc: '除夕守岁' },
+                { name: '祭灶节', keyword: '祭灶节插画', desc: '祭灶送神' },
+                { name: '寒食节', keyword: '寒食节插画', desc: '寒食禁火' },
+                { name: '上巳节', keyword: '上巳节插画 踏青', desc: '上巳踏青' }
+            ]
+        };
+
+        const grid = document.getElementById('grid');
+
+        // 添加24节气标题
+        const solarTitle = document.createElement('div');
+        solarTitle.className = 'section-title';
+        solarTitle.textContent = '🌸 24节气';
+        grid.appendChild(solarTitle);
+
+        // 添加节气卡片
+        data.solarTerms.forEach(item => {
+            createCard(item, '节气');
+        });
+
+        // 添加传统节日标题
+        const festivalTitle = document.createElement('div');
+        festivalTitle.className = 'section-title';
+        festivalTitle.textContent = '🎊 传统节日';
+        grid.appendChild(festivalTitle);
+
+        // 添加节日卡片
+        data.festivals.forEach(item => {
+            createCard(item, '节日');
+        });
+
+        function createCard(item, type) {
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            // 构造百度图片搜索URL
+            const searchUrl = `https://image.baidu.com/search/index?tn=baiduimage&word=${encodeURIComponent(item.keyword)}`;
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="name">${item.name}</div>
+                    <div class="status">${type} · ${item.desc}</div>
+                </div>
+                <div class="card-body">
+                    <a href="${searchUrl}" target="_blank" class="search-link">
+                        🔍 在百度图片搜索 "${item.keyword}"
+                    </a>
+                    <div class="file-info">
+                        <strong>保存位置：</strong><br>
+                        images/festival_art/<br>
+                        <strong>文件名：</strong><br>
+                        ${item.name}.jpg
+                    </div>
+                </div>
+            `;
+
+            grid.appendChild(card);
+        }
+
+        // 检查图片是否已下载
+        async function checkDownloadedImages() {
+            const cards = document.querySelectorAll('.card');
+
+            for (const card of cards) {
+                const name = card.querySelector('.name').textContent;
+                const statusDiv = card.querySelector('.status');
+
+                try {
+                    // 尝试加载图片
+                    const response = await fetch(`images/festival_art/${name}.jpg`);
+                    if (response.ok) {
+                        statusDiv.textContent = '✅ 已下载';
+                        statusDiv.style.color = '#28a745';
+                    }
+                } catch {
+                    // 图片不存在
+                }
+            }
+        }
+
+        // 页面加载后检查已下载的图片
+        window.addEventListener('load', () => {
+            setTimeout(checkDownloadedImages, 1000);
+        });
+    </script>
+</body>
+</html>

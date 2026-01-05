@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国风水墨画 - 节气和传统节日背景图测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', 'SimSun', serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        .test-image {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #8B7355 0%, #D4C4B0 100%);
+        }
+        .test-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .test-card:hover .test-image img {
+            transform: scale(1.05);
+        }
+        .test-info {
+            padding: 20px;
+        }
+        .test-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+        .test-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .test-url {
+            font-size: 12px;
+            color: #999;
+            word-break: break-all;
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin: 40px 0 20px 0;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            letter-spacing: 3px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .summary {
+            grid-column: 1 / -1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .summary h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .summary-item {
+            display: inline-block;
+            margin-right: 20px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .summary-item.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .summary-item.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .summary-item.total {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>中国风水墨画背景图</h1>
+        <p>24节气与传统节日 - 采用维基媒体公共领域中国画作品</p>
+    </div>
+
+    <div class="test-grid" id="testGrid">
+        <div class="summary" id="summary">
+            <h3>测试结果统计</h3>
+            <div id="summaryContent">正在加载...</div>
+        </div>
+    </div>
+
+    <script>
+        // 24节气图片（中国风水墨画）
+        const solarTerms = {
+            '立春': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Dong_Qichang_-_Spring_Mountains_in_Mist_-_Google_Art_Project.jpg/1920px-Dong_Qichang_-_Spring_Mountains_in_Mist_-_Google_Art_Project.jpg',
+                desc: '董其昌 - 春山图（明代）'
+            },
+            '雨水': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Mi_Fu_-_Shu_Sansui_-_Google_Art_Project.jpg/1920px-Mi_Fu_-_Shu_Sansui_-_Google_Art_Project.jpg',
+                desc: '米芾 - 水墨山水（宋代）'
+            },
+            '惊蛰': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Gu_Kaixi_-_Mountains_and_Palaces_-_Google_Art_Project.jpg/1920px-Gu_Kaixi_-_Mountains_and_Palaces_-_Google_Art_Project.jpg',
+                desc: '郭熙 - 山水楼阁（宋代）'
+            },
+            '春分': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Tang_Yin_-_Trees_and_Rocks_-_Google_Art_Project.jpg/1920px-Tang_Yin_-_Trees_and_Rocks_-_Google_Art_Project.jpg',
+                desc: '唐寅 - 春日树石（明代）'
+            },
+            '清明': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Zhang_Zeduan_-_Along_the_River_During_the_Qingming_Festival_-_Google_Art_Project.jpg/1920px-Zhang_Zeduan_-_Along_the_River_During_the_Qingming_Festival_-_Google_Art_Project.jpg',
+                desc: '张择端 - 清明上河图（北宋）'
+            },
+            '谷雨': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Wang_Hui_-_Landscape_after_Dong_Ju-chang_-_Google_Art_Project.jpg/1920px-Wang_Hui_-_Landscape_after_Dong_Ju-chang_-_Google_Art_Project.jpg',
+                desc: '王翚 - 仿董其昌山水（清代）'
+            },
+            '立夏': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Shen_Zhou_-_Visiting_Friends_-_Google_Art_Project.jpg/1920px-Shen_Zhou_-_Visiting_Friends_-_Google_Art_Project.jpg',
+                desc: '沈周 - 访友图（明代）'
+            },
+            '小满': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Wen_Zhengming_-_Garden_Scene_-_Google_Art_Project.jpg/1920px-Wen_Zhengming_-_Garden_Scene_-_Google_Art_Project.jpg',
+                desc: '文徵明 - 园林景色（明代）'
+            },
+            '芒种': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Qiu_Ying_-_Departure_Heroic_-_Google_Art_Project.jpg/1920px-Qiu_Ying_-_Departure_Heroic_-_Google_Art_Project.jpg',
+                desc: '仇英 - 农耕场景（明代）'
+            },
+            '夏至': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Dai_Jin_-_Returning_Boat_-_Google_Art_Project.jpg/1920px-Dai_Jin_-_Returning_Boat_-_Google_Art_Project.jpg',
+                desc: '戴进 - 归舟图（明代）'
+            },
+            '小暑': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Li_Tang_-_Wind_in_Pines_Among_a_Myriad_Valleys_-_Google_Art_Project.jpg/1920px-Li_Tang_-_Wind_in_Pines_Among_a_Myriad_Valleys_-_Google_Art_Project.jpg',
+                desc: '李唐 - 万壑松风（宋代）'
+            },
+            '大暑': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Xia_Gui_-_Pure_and_Remote_View_of_Mountains_and_Rivers_-_Google_Art_Project.jpg/1920px-Xia_Gui_-_Pure_and_Remote_View_of_Mountains_and_Rivers_-_Google_Art_Project.jpg',
+                desc: '夏圭 - 山河清远图（宋代）'
+            },
+            '立秋': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Zao_Ji_-_Landscape_with_Mountains_and_Creek_-_Google_Art_Project.jpg/1920px-Zao_Ji_-_Landscape_with_Mountains_and_Creek_-_Google_Art_Project.jpg',
+                desc: '赵稷 - 秋山水（明代）'
+            },
+            '处暑': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Ni_Zan_-_The_Rongxi_Studio_-_Google_Art_Project.jpg/1920px-Ni_Zan_-_The_Rongxi_Studio_-_Google_Art_Project.jpg',
+                desc: '倪瓒 - 秋江图（元代）'
+            },
+            '白露': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Dong_Qichang_-_Landscape_dedicated_to_Nan_Jingyun_-_Google_Art_Project.jpg/1920px-Dong_Qichang_-_Landscape_dedicated_to_Nan_Jingyun_-_Google_Art_Project.jpg',
+                desc: '董其昌 - 秋日山水（明代）'
+            },
+            '秋分': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Huang_Gongwang_-_Dwelling_in_the_Fuchun_Mountains_-_Google_Art_Project.jpg/1920px-Huang_Gongwang_-_Dwelling_in_the_Fuchun_Mountains_-_Google_Art_Project.jpg',
+                desc: '黄公望 - 富春山居图（元代）'
+            },
+            '寒露': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Wang_Meng_-_Forest_of_Gushing_Vapors_-_Google_Art_Project.jpg/1920px-Wang_Meng_-_Forest_of_Gushing_Vapors_-_Google_Art_Project.jpg',
+                desc: '王蒙 - 秋山图（元代）'
+            },
+            '霜降': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Shen_Zhou_-_Poetic_Writing_-_Google_Art_Project.jpg/1920px-Shen_Zhou_-_Poetic_Writing_-_Google_Art_Project.jpg',
+                desc: '沈周 - 霜秋诗意图（明代）'
+            },
+            '立冬': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Wang_Jian_-_Landscapes_-_Google_Art_Project.jpg/1920px-Wang_Jian_-_Landscapes_-_Google_Art_Project.jpg',
+                desc: '王鉴 - 冬景山水（清代）'
+            },
+            '小雪': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Gong_Xian_-_Mountains_and_Valleys_-_Google_Art_Project.jpg/1920px-Gong_Xian_-_Mountains_and_Valleys_-_Google_Art_Project.jpg',
+                desc: '龚贤 - 雪景山水（清代）'
+            },
+            '大雪': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Tang_Yin_-_Winter_Plains_-_Google_Art_Project.jpg/1920px-Tang_Yin_-_Winter_Plains_-_Google_Art_Project.jpg',
+                desc: '唐寅 - 雪原图（明代）'
+            },
+            '冬至': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Wen_Zhengming_-_Winter_Landscape_-_Google_Art_Project.jpg/1920px-Wen_Zhengming_-_Winter_Landscape_-_Google_Art_Project.jpg',
+                desc: '文徵明 - 冬景图（明代）'
+            },
+            '小寒': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Li_Cheng_-_Solitary_Temple_Among_Clearing_Peaks_-_Google_Art_Project.jpg/1920px-Li_Cheng_-_Solitary_Temple_Among_Clearing_Peaks_-_Google_Art_Project.jpg',
+                desc: '李成 - 寒山图（五代）'
+            },
+            '大寒': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Wang_Meng_-_Thatched_Cottage_in_Summer_Mountains_-_Google_Art_Project.jpg/1920px-Wang_Meng_-_Thatched_Cottage_in_Summer_Mountains_-_Google_Art_Project.jpg',
+                desc: '王蒙 - 寒冬山居图（元代）'
+            }
+        };
+
+        // 传统节日图片（中国风水墨画）
+        const festivals = {
+            '春节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Dong_Qichang_-_Spring_Mountains_in_Mist_-_Google_Art_Project.jpg/1920px-Dong_Qichang_-_Spring_Mountains_in_Mist_-_Google_Art_Project.jpg',
+                desc: '董其昌 - 春山图（明代）'
+            },
+            '小年': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Shen_Zhou_-_Visiting_Friends_-_Google_Art_Project.jpg/1920px-Shen_Zhou_-_Visiting_Friends_-_Google_Art_Project.jpg',
+                desc: '沈周 - 访友图（明代）'
+            },
+            '元宵节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Wen_Zhengming_-_Garden_Scene_-_Google_Art_Project.jpg/1920px-Wen_Zhengming_-_Garden_Scene_-_Google_Art_Project.jpg',
+                desc: '文徵明 - 园林景色（明代）'
+            },
+            '清明节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Zhang_Zeduan_-_Along_the_River_During_the_Qingming_Festival_-_Google_Art_Project.jpg/1920px-Zhang_Zeduan_-_Along_the_River_During_the_Qingming_Festival_-_Google_Art_Project.jpg',
+                desc: '张择端 - 清明上河图（北宋）'
+            },
+            '端午节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Dai_Jin_-_Returning_Boat_-_Google_Art_Project.jpg/1920px-Dai_Jin_-_Returning_Boat_-_Google_Art_Project.jpg',
+                desc: '戴进 - 归舟图（明代）'
+            },
+            '七夕节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Huang_Gongwang_-_Dwelling_in_the_Fuchun_Mountains_-_Google_Art_Project.jpg/1920px-Huang_Gongwang_-_Dwelling_in_the_Fuchun_Mountains_-_Google_Art_Project.jpg',
+                desc: '黄公望 - 富春山居图（元代）'
+            },
+            '中秋节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Tang_Yin_-_Trees_and_Rocks_-_Google_Art_Project.jpg/1920px-Tang_Yin_-_Trees_and_Rocks_-_Google_Art_Project.jpg',
+                desc: '唐寅 - 秋日树石（明代）'
+            },
+            '重阳节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Li_Tang_-_Wind_in_Pines_Among_a_Myriad_Valleys_-_Google_Art_Project.jpg/1920px-Li_Tang_-_Wind_in_Pines_Among_a_Myriad_Valleys_-_Google_Art_Project.jpg',
+                desc: '李唐 - 万壑松风（宋代）'
+            },
+            '腊八节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Wang_Jian_-_Landscapes_-_Google_Art_Project.jpg/1920px-Wang_Jian_-_Landscapes_-_Google_Art_Project.jpg',
+                desc: '王鉴 - 冬景山水（清代）'
+            },
+            '冬至': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Wen_Zhengming_-_Winter_Landscape_-_Google_Art_Project.jpg/1920px-Wen_Zhengming_-_Winter_Landscape_-_Google_Art_Project.jpg',
+                desc: '文徵明 - 冬景图（明代）'
+            },
+            '除夕': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Li_Cheng_-_Solitary_Temple_Among_Clearing_Peaks_-_Google_Art_Project.jpg/1920px-Li_Cheng_-_Solitary_Temple_Among_Clearing_Peaks_-_Google_Art_Project.jpg',
+                desc: '李成 - 寒山图（五代）'
+            },
+            '祭灶节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Zao_Ji_-_Landscape_with_Mountains_and_Creek_-_Google_Art_Project.jpg/1920px-Zao_Ji_-_Landscape_with_Mountains_and_Creek_-_Google_Art_Project.jpg',
+                desc: '赵稷 - 山水图（明代）'
+            },
+            '寒食节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Ni_Zan_-_The_Rongxi_Studio_-_Google_Art_Project.jpg/1920px-Ni_Zan_-_The_Rongxi_Studio_-_Google_Art_Project.jpg',
+                desc: '倪瓒 - 秋江图（元代）'
+            },
+            '上巳节': {
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Dong_Qichang_-_Landscape_dedicated_to_Nan_Jingyun_-_Google_Art_Project.jpg/1920px-Dong_Qichang_-_Landscape_dedicated_to_Nan_Jingyun_-_Google_Art_Project.jpg',
+                desc: '董其昌 - 春日山水（明代）'
+            }
+        };
+
+        const testGrid = document.getElementById('testGrid');
+        let successCount = 0;
+        let errorCount = 0;
+
+        // 添加节气部分标题
+        const solarTitle = document.createElement('div');
+        solarTitle.className = 'section-title';
+        solarTitle.textContent = '24节气';
+        testGrid.appendChild(solarTitle);
+
+        // 测试节气图片
+        for (const [name, data] of Object.entries(solarTerms)) {
+            createTestCard(name, data.url, data.desc, '节气');
+        }
+
+        // 添加传统节日部分标题
+        const festivalTitle = document.createElement('div');
+        festivalTitle.className = 'section-title';
+        festivalTitle.textContent = '传统节日';
+        testGrid.appendChild(festivalTitle);
+
+        // 测试传统节日图片
+        for (const [name, data] of Object.entries(festivals)) {
+            createTestCard(name, data.url, data.desc, '节日');
+        }
+
+        function createTestCard(name, url, description, type) {
+            const card = document.createElement('div');
+            card.className = 'test-card';
+
+            card.innerHTML = `
+                <div class="test-image">
+                    <img src="${url}" alt="${name}" onload="markSuccess(this, '${name}')" onerror="markError(this, '${name}')">
+                </div>
+                <div class="test-info">
+                    <div class="test-name">${name}</div>
+                    <div class="test-description">${description}</div>
+                    <div class="test-url">${url.substring(0, 80)}...</div>
+                    <span class="status loading" id="status-${name}">检测中...</span>
+                </div>
+            `;
+
+            testGrid.appendChild(card);
+        }
+
+        function markSuccess(img, name) {
+            const status = document.getElementById(`status-${name}`);
+            if (status) {
+                status.textContent = '✅ 加载成功';
+                status.className = 'status success';
+                successCount++;
+            }
+            updateSummary();
+        }
+
+        function markError(img, name) {
+            const status = document.getElementById(`status-${name}`);
+            if (status) {
+                status.textContent = '❌ 加载失败';
+                status.className = 'status error';
+                errorCount++;
+            }
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const total = successCount + errorCount;
+            const summaryContent = document.getElementById('summaryContent');
+            summaryContent.innerHTML = `
+                <span class="summary-item total">总计: ${total} 张</span>
+                <span class="summary-item success">成功: ${successCount} 张</span>
+                <span class="summary-item error">失败: ${errorCount} 张</span>
+            `;
+        }
+
+        // 初始统计
+        updateSummary();
+    </script>
+</body>
+</html>
