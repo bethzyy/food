@@ -297,15 +297,11 @@ class FoodRecommendationApp {
 
     // 设置事件监听器
     setupEventListeners() {
-        // 自动获取时间按钮
-        document.getElementById('autoTimeBtn').addEventListener('click', () => {
-            this.autoSetDateTime();
-            this.updateSolarTermDisplay();
-        });
-
-        // 自动获取位置按钮（已移除位置功能）
-        document.getElementById('autoLocationBtn').addEventListener('click', () => {
-            this.autoGetLocation();
+        // 语言切换按钮
+        document.getElementById('langToggleBtn').addEventListener('click', () => {
+            const newLang = i18n.currentLang === 'zh' ? 'en' : 'zh';
+            i18n.setLanguage(newLang);
+            this.updateSolarTermDisplay(); // 更新节气显示
         });
 
         // 日期变化时更新节气显示
@@ -317,6 +313,11 @@ class FoodRecommendationApp {
         // 生成推荐按钮
         document.getElementById('generateBtn').addEventListener('click', () => {
             this.generateRecommendation();
+        });
+
+        // 监听语言变化事件
+        window.addEventListener('languageChanged', (e) => {
+            this.onLanguageChanged(e.detail.lang);
         });
     }
 
@@ -577,6 +578,13 @@ class FoodRecommendationApp {
         document.body.className = season;
     }
 
+    // 处理语言切换事件
+    onLanguageChanged(lang) {
+        console.log('语言已切换为:', lang);
+        // 重新更新节气显示(可能会影响翻译)
+        this.updateSolarTermDisplay();
+    }
+
     // 更新节气显示
     updateSolarTermDisplay() {
         const dateInput = document.getElementById('dateInput').value;
@@ -622,7 +630,7 @@ class FoodRecommendationApp {
             termInfo = `  · ${solarTerm.name}`;
         }
 
-        // 合并显示:去掉时辰的重复显示,只显示"己巳时"不显示"(巳时 10:24)"
+        // 合并显示:新格式 - 丙午年 丙寅月 己卯日 辛未时 2025年腊月初六 ✨ 今日小寒 ✨
         const ganzhiCompact = `${ganzhi.year} ${ganzhi.month} ${ganzhi.day} ${ganzhi.hour}`;
         const displayElement = document.getElementById('ganzhiDisplay');
         if (displayElement) {
@@ -730,11 +738,12 @@ class FoodRecommendationApp {
         generateBtn.innerHTML = '⏳ 正在生成...';
         generateBtn.style.opacity = '0.7';
 
-        // 显示结果区域
-        resultSection.style.display = 'block';
-
-        // 滚动到结果区域
-        resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // 显示结果区域(添加安全检查)
+        if (resultSection) {
+            resultSection.style.display = 'block';
+            // 滚动到结果区域
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
         // 显示加载动画,包含模型信息
         loadingSpinner.style.display = 'block';
@@ -938,15 +947,51 @@ class FoodRecommendationApp {
             return apiKey;
         }
 
-        // 如果都没有，提示用户输入
-        console.log('⚠️ 未找到API Key，提示用户输入');
-        apiKey = prompt('请输入您的智谱AI API Key (ZHIPU_API_KEY):');
-        if (apiKey) {
-            localStorage.setItem('ZHIPU_API_KEY', apiKey);
-            console.log('✅ API Key已保存到localStorage');
-        }
+        // 如果都没有，显示模态框让用户输入
+        console.log('⚠️ 未找到API Key，显示输入框');
+        return await this.showApiKeyModal();
+    }
 
-        return apiKey;
+    // 显示API Key输入模态框
+    showApiKeyModal() {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('apiKeyModal');
+            const input = document.getElementById('apiKeyInput');
+            const saveBtn = document.getElementById('saveApiKeyBtn');
+
+            // 显示模态框
+            modal.style.display = 'flex';
+
+            // 聚焦输入框
+            setTimeout(() => input.focus(), 100);
+
+            // 保存按钮点击事件
+            const handleSave = () => {
+                const apiKey = input.value.trim();
+                if (apiKey) {
+                    localStorage.setItem('ZHIPU_API_KEY', apiKey);
+                    console.log('✅ API Key已保存到localStorage');
+                    modal.style.display = 'none';
+                    // 清理事件监听
+                    saveBtn.removeEventListener('click', handleSave);
+                    input.removeEventListener('keypress', handleKeyPress);
+                    resolve(apiKey);
+                } else {
+                    alert('请输入有效的API Key');
+                    input.focus();
+                }
+            };
+
+            // 回车键保存
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') {
+                    handleSave();
+                }
+            };
+
+            saveBtn.addEventListener('click', handleSave);
+            input.addEventListener('keypress', handleKeyPress);
+        });
     }
 
     // 构建提示词（从prompts文件夹读取）
@@ -1135,22 +1180,22 @@ class FoodRecommendationApp {
 
         if (recommendation.dishes && recommendation.dishes.length > 0) {
             recommendation.dishes.forEach((dish, index) => {
-                // 获取菜品类型emoji和雅致称谓
+                // 获取菜品类型(不使用emoji和标签)
                 const typeInfo = {
-                    '汤品': { emoji: '🍲', name: '羹汤', label: '汤' },
-                    '主食': { emoji: '🍚', name: '五谷', label: '饭' },
-                    '热菜': { emoji: '🥘', name: '佳肴', label: '菜' },
-                    '凉菜': { emoji: '🥗', name: '凉碟', label: '凉' },
-                    '甜品': { emoji: '🍮', name: '甜点', label: '点' },
-                    '药膳': { emoji: '🏮', name: '药膳', label: '方' }
+                    '汤品': { emoji: '', name: '', label: '' },
+                    '主食': { emoji: '', name: '', label: '' },
+                    '热菜': { emoji: '', name: '', label: '' },
+                    '凉菜': { emoji: '', name: '', label: '' },
+                    '甜品': { emoji: '', name: '', label: '' },
+                    '药膳': { emoji: '', name: '', label: '' }
                 };
-                const typeData = typeInfo[dish.type] || { emoji: '🍽️', name: '珍馐', label: '馔' };
+                const typeData = typeInfo[dish.type] || { emoji: '', name: '', label: '' };
 
-                // 简化食材显示
+                // 简化食材显示 - 包含克数
                 let ingredientsText = '';
                 if (Array.isArray(dish.ingredients)) {
                     if (typeof dish.ingredients[0] === 'object') {
-                        ingredientsText = dish.ingredients.map(ing => ing.item).join('、');
+                        ingredientsText = dish.ingredients.map(ing => `${ing.item}${ing.amount ? ing.amount + '克' : ''}`).join('、');
                     } else {
                         ingredientsText = dish.ingredients.join('、');
                     }
@@ -1159,7 +1204,7 @@ class FoodRecommendationApp {
                 // 简化营养信息 - 使用雅致表述
                 let nutritionBadge = '';
                 if (typeof dish.nutrition === 'object') {
-                    nutritionBadge = `<span class="nutrition-badge">🔥 ${dish.nutrition.calories}大卡</span>`;
+                    nutritionBadge = `<span class="dish-calories-badge"><span class="fire-icon">🔥</span>${dish.nutrition.calories}大卡</span>`;
                 }
 
                 // 生成菜品类型对应的渐变背景色
@@ -1167,45 +1212,37 @@ class FoodRecommendationApp {
 
                 dishesHtml += `
                     <div class="dish-card">
-                        <div class="dish-main">
-                            <div class="dish-header">
-                                <span class="dish-emoji">${typeData.emoji}</span>
-                                <div class="dish-title-group">
-                                    <h3 class="dish-name">${dish.name}</h3>
-                                    <span class="dish-type-badge-small">${typeData.name}</span>
-                                </div>
+                        <div class="dish-header">
+                            <span class="dish-emoji">${typeData.emoji}</span>
+                            <div class="dish-title-group">
+                                <h3 class="dish-name">${dish.name}</h3>
+                                ${nutritionBadge ? `
+                                <span class="dish-calories-badge">${nutritionBadge}</span>
+                                ` : ''}
                             </div>
+                        </div>
 
-                            <div class="dish-body">
-                                <div class="dish-ingredients">
-                                    <p class="label">🥘 食材</p>
-                                    <p class="value">${ingredientsText}</p>
-                                </div>
+                        <div class="dish-ingredients">
+                            <p class="label">🥘 食材</p>
+                            <p class="value">${ingredientsText}</p>
+                        </div>
 
-                            ${nutritionBadge ? `
-                            <div class="dish-nutrition">
-                                ${nutritionBadge}
-                            </div>
-                            ` : ''}
+                        ${dish.suitable ? `
+                        <div class="dish-suitable">
+                            <p class="label">👥 宜食</p>
+                            <p class="value">${dish.suitable}</p>
+                        </div>
+                        ` : ''}
 
-                            ${dish.suitable ? `
-                            <div class="dish-suitable">
-                                <p class="label">👥 宜食</p>
-                                <p class="value">${dish.suitable}</p>
-                            </div>
-                            ` : ''}
-                            </div>
+                        <button class="toggle-recipe" onclick="app.toggleRecipe(${index})">
+                            📜 查看制法
+                        </button>
 
-                            <button class="toggle-recipe" onclick="app.toggleRecipe(${index})">
-                                📜 查看制法
-                            </button>
-
-                            <div class="recipe-content" id="recipe-${index}" style="display: none;">
-                                <div class="recipe-steps">
-                                    ${Array.isArray(dish.recipe) ? dish.recipe.map((step, i) =>
-                                        `<div class="recipe-step"><span class="step-num">${['壹','贰','叁','肆','伍','陆','柒','捌','玖','拾'][i]}</span>${step}</div>`
-                                    ).join('') : ''}
-                                </div>
+                        <div class="recipe-content" id="recipe-${index}" style="display: none;">
+                            <div class="recipe-steps">
+                                ${Array.isArray(dish.recipe) ? dish.recipe.map((step, i) =>
+                                    `<div class="recipe-step"><span class="step-num">${['壹','贰','叁','肆','伍','陆','柒','捌','玖','拾'][i]}</span>${step}</div>`
+                                ).join('') : ''}
                             </div>
                         </div>
                     </div>
@@ -1257,7 +1294,7 @@ class FoodRecommendationApp {
         if (recommendation.tips) {
             dishesHtml += `
                 <div class="tips-card">
-                    <h3 class="card-title">💊 养生要诀</h3>
+                    <h3 class="card-title">🌿 养生要诀</h3>
                     <div class="tips-grid">
                         ${recommendation.tips.shopping ? `
                         <div class="tip-item">
@@ -1415,11 +1452,11 @@ class FoodRecommendationApp {
                 };
                 const teaType = teaTypes[tea.type] || { emoji: '🍵', name: '茶饮' };
 
-                // 配料显示
+                // 配料显示 - 包含克数
                 let ingredientsText = '';
                 if (Array.isArray(tea.ingredients)) {
                     if (typeof tea.ingredients[0] === 'object') {
-                        ingredientsText = tea.ingredients.map(ing => ing.item).join('、');
+                        ingredientsText = tea.ingredients.map(ing => `${ing.item}${ing.amount ? ing.amount + '克' : ''}`).join('、');
                     } else {
                         ingredientsText = tea.ingredients.join('、');
                     }
@@ -1427,52 +1464,47 @@ class FoodRecommendationApp {
 
                 teasHtml += `
                     <div class="dish-card">
-                        <div class="dish-main">
-                            <div class="dish-header">
-                                <span class="dish-emoji">${teaType.emoji}</span>
-                                <div class="dish-title-group">
-                                    <h3 class="dish-name">${tea.name}</h3>
-                                    <span class="dish-type-badge-small">${teaType.name}</span>
-                                </div>
+                        <div class="dish-header">
+                            <span class="dish-emoji">${teaType.emoji}</span>
+                            <div class="dish-title-group">
+                                <h3 class="dish-name">${tea.name}</h3>
                             </div>
+                        </div>
 
-                            <div class="dish-body">
-                                <div class="dish-ingredients">
-                                    <p class="label">🌿 配料</p>
-                                    <p class="value">${ingredientsText}</p>
-                                </div>
+                        <div class="dish-ingredients">
+                            <p class="label">🌿 配料</p>
+                            <p class="value">${ingredientsText}</p>
+                        </div>
 
-                                ${tea.benefits ? `
-                                <div class="dish-nutrition">
-                                    <span class="nutrition-badge">✨ ${tea.benefits}</span>
-                                </div>
-                                ` : ''}
+                        ${tea.benefits ? `
+                        <div class="dish-nutrition">
+                            <span class="nutrition-badge">✨ ${tea.benefits}</span>
+                        </div>
+                        ` : ''}
 
-                                ${tea.suitable ? `
-                                <div class="dish-suitable">
-                                    <p class="label">👥 宜饮</p>
-                                    <p class="value">${tea.suitable}</p>
-                                </div>
-                                ` : ''}
+                        ${tea.suitable ? `
+                        <div class="dish-suitable">
+                            <p class="label">👥 宜饮</p>
+                            <p class="value">${tea.suitable}</p>
+                        </div>
+                        ` : ''}
 
-                                ${tea.contraindications ? `
-                                <div class="dish-suitable">
-                                    <p class="label">⚠️ 禁忌</p>
-                                    <p class="value">${tea.contraindications}</p>
-                                </div>
-                                ` : ''}
-                            </div>
+                        ${tea.contraindications ? `
+                        <div class="dish-suitable">
+                            <p class="label">⚠️ 禁忌</p>
+                            <p class="value">${tea.contraindications}</p>
+                        </div>
+                        ` : ''}
 
-                            <button class="toggle-recipe" onclick="app.toggleRecipe(${index})">
-                                📜 查看制法
-                            </button>
+                        <button class="toggle-recipe" onclick="app.toggleRecipe(${index})">
+                            📜 查看制法
+                        </button>
 
-                            <div class="recipe-content" id="recipe-${index}" style="display: none;">
-                                <div class="recipe-steps">
-                                    ${Array.isArray(tea.method) ? tea.method.map((step, i) =>
-                                        `<div class="recipe-step"><span class="step-num">${['壹','贰','叁','肆','伍'][i]}</span>${step}</div>`
-                                    ).join('') : ''}
-                                </div>
+                        <div class="recipe-content" id="recipe-${index}" style="display: none;">
+                            <div class="recipe-steps">
+                                ${Array.isArray(tea.method) ? tea.method.map((step, i) =>
+                                    `<div class="recipe-step"><span class="step-num">${['壹','贰','叁','肆','伍'][i]}</span>${step}</div>`
+                                ).join('') : ''}
                             </div>
                         </div>
                     </div>
@@ -1628,31 +1660,31 @@ class FoodRecommendationApp {
                     <th>含量</th>
                 </tr>
                 <tr>
-                    <td>🔥 总热量</td>
+                    <td>总热量</td>
                     <td><strong>${nutrition.calories}</strong> 大卡</td>
                 </tr>
                 <tr>
-                    <td>🥩 蛋白质</td>
+                    <td>蛋白质</td>
                     <td><strong>${proteinAmount}</strong> 克 (${proteinPct}%)</td>
                 </tr>
                 <tr>
-                    <td>🧈 脂肪</td>
+                    <td>脂肪</td>
                     <td><strong>${fatAmount}</strong> 克 (${fatPct}%)</td>
                 </tr>
                 <tr>
-                    <td>🍞 碳水化合物</td>
+                    <td>碳水化合物</td>
                     <td><strong>${carbsAmount}</strong> 克 (${carbsPct}%)</td>
                 </tr>
                 <tr>
-                    <td>💊 维生素</td>
+                    <td>维生素</td>
                     <td>${vitaminsList.join('、')}</td>
                 </tr>
                 <tr>
-                    <td>⚗️ 矿物质</td>
+                    <td>矿物质</td>
                     <td>${mineralsList.join('、')}</td>
                 </tr>
                 <tr>
-                    <td colspan="2"><strong>📝 ${summaryText}</strong></td>
+                    <td colspan="2"><strong>${summaryText}</strong></td>
                 </tr>
             </table>
         `;

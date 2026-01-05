@@ -23,7 +23,7 @@ if sys.platform == 'win32':
     except:
         pass
 
-PORT = 8000
+PORT = 8004
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 class APIKeyHandler(http.server.SimpleHTTPRequestHandler):

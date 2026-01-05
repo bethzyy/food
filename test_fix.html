@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>测试修复</title>
+</head>
+<body>
+    <h1>测试JavaScript修复</h1>
+    <div id="test-result"></div>
+
+    <script src="app.js"></script>
+    <script>
+        // 测试 onLanguageChanged 是否存在
+        const app = new FoodRecommendationApp();
+
+        if (typeof app.onLanguageChanged === 'function') {
+            document.getElementById('test-result').innerHTML = '<p style="color: green;">✅ onLanguageChanged 方法存在!</p>';
+            console.log('✅ onLanguageChanged 方法存在!');
+        } else {
+            document.getElementById('test-result').innerHTML = '<p style="color: red;">❌ onLanguageChanged 方法不存在!</p>';
+            console.log('❌ onLanguageChanged 方法不存在!');
+        }
+    </script>
+</body>
+</html>
