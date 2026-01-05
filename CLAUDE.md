@@ -62,7 +62,8 @@ python server_with_env.py
    - **Four-season palettes** based on traditional Chinese color theory
    - **24 solar term specific gradient backgrounds** - each节气 has unique cultural gradient
    - **Traditional Chinese color spectrum** - 25+ traditional colors (胭脂, 古金, 碧玉, 徽墨, etc.)
-   - **Flat, minimalist design** - optimized for readability
+   - **Glassmorphism design** - Semi-transparent components with backdrop-filter blur
+   - **Background fog effect** - 70% white overlay on illustrations for readability
 
 3. **app.js** (~1800 lines) - Core logic with:
    - **ChineseCalendar class** - Centralized calendar calculations
@@ -157,30 +158,32 @@ if (todayTerm) {
 
 ### 4. Chinese Style Background System
 
-**Gradient backgrounds** for each solar term and traditional festival:
+**Priority-based background loading** - Local images first, then gradients:
 
 ```javascript
 setSolarTermBackground(solarTermName, container) {
-    const solarTermGradients = {
-        '立春': 'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)',  // 春竹新生
-        '小寒': 'linear-gradient(135deg, #e6dada 0%, #274046 100%)',  // 小寒严寒
-        // ... all 24 solar terms
+    // 1. Try local illustration image first
+    const imagePath = `images/festival_art/${solarTermName}.png`;
+    const img = new Image();
+
+    img.onload = () => {
+        // Use local image if available
+        container.style.background = `url(${imagePath}) center/cover no-repeat`;
     };
 
-    const festivalGradients = {
-        '春节': 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)',  // 春节红妆
-        '中秋': 'linear-gradient(135deg, #2c3e50 0%, #fd746c 100%)', // 中秋月圆
-        // ... all traditional festivals
+    img.onerror = () => {
+        // Fallback to gradient if image not found
+        this.applyGradientBackground(solarTermName, container);
     };
 
-    // Priority: festivals > solar terms
-    const gradient = festivalGradients[solarTermName] || solarTermGradients[solarTermName];
-    if (gradient) {
-        container.style.background = gradient;
-        container.style.transition = 'background 0.5s ease';
-    }
+    img.src = imagePath;
 }
 ```
+
+**Gradient fallback system** for each solar term and traditional festival:
+- 24 solar term gradients (立春 through 大寒)
+- 13 traditional festival gradients (春节, 元宵节, etc.)
+- Automatic fallback if local images missing
 
 **Near-solar-term detection**: Checks today ±2 days for special UI effects.
 
@@ -267,10 +270,10 @@ food/
 │   └── tea_recommendation_prompt.txt     # Tea/herbal recommendations
 ├── images/
 │   └── festival_art/              # Solar term & festival illustration storage
-│       ├── 立春.jpg
-│       ├── 小寒.jpg
-│       ├── 春节.jpg
-│       └── ... (37 total files)
+│       ├── 立春.png
+│       ├── 小寒.png
+│       ├── 春节.png
+│       └── ... (41 PNG files - 24 solar terms + festivals)
 ├── server_with_env.py              # Python server with env var support
 └── illustration_download_guide.html  # Manual image download guide
 ```
@@ -288,16 +291,27 @@ Edit prompt files in `prompts/` directory directly:
 
 ### Changing Background Colors
 
-Edit in `app.js` around line 878-932 (`setSolarTermBackground` method):
+**Option 1: Modify gradient fallbacks** in `app.js` around line 920-956 (`applyGradientBackground` method):
 
 ```javascript
 const solarTermGradients = {
-    '小寒': 'linear-gradient(135deg, #e6dada 0%, #274046 100%)',  // Edit this
+    '小寒': 'linear-gradient(135deg, #e6dada 0%, #274046 100%)',  // Edit gradient
     // ...
 };
 ```
 
-**Background System**: Uses CSS gradients instead of image files for performance and reliability.
+**Option 2: Adjust fog overlay** in `style.css` line 127-137:
+
+```css
+.app-container::before {
+    background: rgba(255, 255, 255, 0.7);  /* Adjust opacity (0.5-0.9) */
+}
+```
+
+**Background System**:
+- Prioritizes local PNG images from `images/festival_art/`
+- Falls back to CSS gradients if images missing
+- Applies 70% white fog overlay for readability
 
 ### Adjusting Ganzhi Display Format
 
@@ -312,16 +326,21 @@ displayElement.textContent = `${ganzhiCompact}  ${lunarDate.display}${termInfo}`
 
 ### Adding Manual Illustrations
 
-If users want custom illustration backgrounds instead of gradients:
+If users want custom illustration backgrounds:
 
-1. Download illustrations from Baidu Images using `illustration_download_guide.html`
-2. Save to: `images/festival_art/`
-3. **Naming convention** (critical - must match exactly):
-   - 24 solar terms: `立春.jpg`, `雨水.jpg`, ..., `大寒.jpg`
-   - Traditional festivals: `春节.jpg`, `元宵节.jpg`, ..., `上巳节.jpg`
-4. Application will automatically use images if they exist, otherwise falls back to gradients
+1. Use `illustration_download_guide.html` to find Baidu Image search links
+2. Download Chinese-style illustrations (插画, not photos)
+3. Save to: `images/festival_art/`
+4. **Critical naming convention**:
+   - 24 solar terms: `立春.png`, `雨水.png`, ..., `大寒.png`
+   - Traditional festivals: `春节.png`, `元宵节.png`, etc.
+5. Application automatically uses local images if they exist, falls back to gradients if missing
 
-**Note**: The gradient background system is recommended as it's faster, more reliable, and carries cultural meaning through color symbolism.
+**Current setup**:
+- 41 PNG illustration files already downloaded
+- Local images prioritized over gradients
+- Automatic Image preload with graceful degradation
+- 70% white fog overlay ensures readability
 
 ### Debugging
 
@@ -393,9 +412,18 @@ Simplified algorithm with reference date:
 ### 3. Illustration vs Photo Confusion
 **Problem**: Downloaded images from free sites are mostly photos, not illustrations
 **Solution**:
-- Created gradient background system (primary)
-- Created manual download guide for users who want custom illustrations
-- Users can manually download from Baidu Images using the guide
+- Created gradient background system as primary fallback
+- Created manual download guide for custom illustrations
+- Users manually downloaded 41 PNG files from Baidu Images
+- Automatic image prioritization with graceful degradation
+
+### 4. Visual Clarity with Backgrounds
+**Problem**: Background illustrations make text hard to read
+**Solution**:
+- Implemented 70% white fog overlay (`rgba(255, 255, 255, 0.7)`)
+- Applied glassmorphism design with backdrop-filter blur
+- Semi-transparent components (rgba with alpha 0.7-0.85)
+- Softened borders and shadows for better contrast
 
 ## Design Philosophy
 
@@ -418,6 +446,9 @@ Simplified algorithm with reference date:
 3. **Visual progress indicators** - Multi-step loading with clear status
 4. **Fastest-first model selection** - Prioritize speed over quality
 5. **Comprehensive information per dish** - All info in one place
+6. **Glassmorphism visual design** - Modern semi-transparent components
+7. **Background fog effect** - 70% white overlay for readability
+8. **Local illustration support** - 41 PNG files with automatic fallback
 
 ## Testing
 
@@ -429,7 +460,9 @@ Simplified algorithm with reference date:
 4. **Loading steps** - Verify all 4 steps complete correctly
 5. **Dish sorting** - Verify 主食 appears last in list
 6. **Model fallback** - Test with different GLM models
-7. **Background gradients** - Check all 24 solar terms + 13 festivals
+7. **Background images** - Verify all 41 PNG images load correctly
+8. **Fog overlay** - Check text readability with different backgrounds
+9. **Glassmorphism effects** - Verify backdrop-filter works on all components
 
 ### Browser Compatibility
 
@@ -444,6 +477,53 @@ No polyfills included - modern browsers only.
 ## Performance Notes
 
 - **Loading optimization**: Uses fastest model first (glm-4-flash)
-- **Gradient backgrounds**: CSS-only, no image loading overhead
+- **Local image prioritization**: Preloads images with graceful fallback
+- **70% fog overlay**: Improves readability without obscuring backgrounds
+- **Glassmorphism effects**: Hardware-accelerated backdrop-filter
 - **Event debouncing**: 10ms setTimeout for rapid input changes
 - **Step-by-step feedback**: Reduces perceived wait time
+
+## Key CSS Patterns
+
+### Glassmorphism Component Styling
+
+All UI components follow this pattern for visual consistency:
+
+```css
+.component-name {
+    background: rgba(255, 255, 255, 0.7-0.85);
+    backdrop-filter: blur(8px-10px);
+    -webkit-backdrop-filter: blur(8px-10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+```
+
+**Components with glassmorphism**:
+- `.app-container` - Main application wrapper (0.85 opacity, blur 10px)
+- `.dish-card` - Individual dish cards (0.7 opacity, blur 8px)
+- `.input-group input` - Text input fields (0.8 opacity)
+- `.styled-select` - Dropdown selects (0.75 opacity, blur 8px)
+- `.primary-btn` / `.secondary-btn` - Buttons (with blur effects)
+- `.radio-text` - Radio button labels (0.75 opacity, blur 8px)
+- `.info-card` - Information cards (0.75 opacity, blur 8px)
+- `.loading-steps` - Loading progress container (0.7 opacity, blur 8px)
+
+### Background Fog Overlay
+
+Located at `style.css` lines 127-137:
+
+```css
+.app-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);  /* Adjust for more/less fog */
+    pointer-events: none;
+    z-index: 0;
+}
+```
+
+**Note**: Fog overlay is positioned above background images but below content (z-index: 0 vs content z-index: 1).

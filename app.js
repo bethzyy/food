@@ -132,9 +132,9 @@ class ChineseCalendar {
             if (prevJie) {
                 // 计算当前日期距离上一个节气的天数
                 const prevJieDate = Solar.fromYmd(
-                    prevJie.getYear(),
-                    prevJie.getMonth(),
-                    prevJie.getDay()
+                    prevJie.getFullYear(),
+                    prevJie.getMonth() + 1,
+                    prevJie.getDate()
                 ).toDate();
 
                 const daysDiff = Math.floor((date - prevJieDate) / (1000 * 60 * 60 * 24));
@@ -146,8 +146,8 @@ class ChineseCalendar {
                     if (daysDiff <= 2) {
                         result = {
                             name: prevJie.getName(),
-                            month: prevJie.getMonth(),
-                            dayRange: [prevJie.getDay(), prevJie.getDay()]
+                            month: prevJie.getMonth() + 1,
+                            dayRange: [prevJie.getDate(), prevJie.getDate()]
                         };
                     }
                 }
@@ -156,9 +156,9 @@ class ChineseCalendar {
             // 检查下一个节气是否在2天以内
             if (nextJie && !result) {
                 const nextJieDate = Solar.fromYmd(
-                    nextJie.getYear(),
-                    nextJie.getMonth(),
-                    nextJie.getDay()
+                    nextJie.getFullYear(),
+                    nextJie.getMonth() + 1,
+                    nextJie.getDate()
                 ).toDate();
 
                 const daysDiff = Math.floor((nextJieDate - date) / (1000 * 60 * 60 * 24));
@@ -167,8 +167,8 @@ class ChineseCalendar {
                 if (daysDiff >= 0 && daysDiff <= 2) {
                     result = {
                         name: nextJie.getName(),
-                        month: nextJie.getMonth(),
-                        dayRange: [nextJie.getDay(), nextJie.getDay()]
+                        month: nextJie.getMonth() + 1,
+                        dayRange: [nextJie.getDate(), nextJie.getDate()]
                     };
                 }
             }
@@ -380,6 +380,8 @@ class FoodRecommendationApp {
         this.chineseCalendar = new ChineseCalendar();
         this.nutritionChart = null;
         this.logger = new LogManager();
+        this.translationCache = {}; // 翻译缓存
+        this.currentLanguage = 'zh'; // 当前语言
 
         this.init();
     }
@@ -698,10 +700,94 @@ class FoodRecommendationApp {
     }
 
     // 处理语言切换事件
-    onLanguageChanged(lang) {
+    async onLanguageChanged(lang) {
         console.log('语言已切换为:', lang);
-        // 重新更新节气显示(可能会影响翻译)
+        this.currentLanguage = lang;
+
+        if (lang === 'en') {
+            // 翻译页面文本
+            await this.translatePage();
+        }
+
+        // 重新更新节气显示
         this.updateSolarTermDisplay();
+    }
+
+    // 翻译页面内容
+    async translatePage() {
+        try {
+            const apiKey = localStorage.getItem('ZHIPU_API_KEY');
+            if (!apiKey) {
+                console.log('未找到API Key，跳过翻译');
+                return;
+            }
+
+            // 收集需要翻译的文本
+            const textsToTranslate = [
+                document.querySelector('.app-header h1').textContent,
+                document.querySelector('.subtitle').textContent,
+            ];
+
+            // 调用翻译API
+            const translatedTexts = await this.translateText(textsToTranslate, 'en');
+
+            // 更新页面文本
+            const titleEl = document.querySelector('.app-header h1');
+            const subtitleEl = document.querySelector('.subtitle');
+
+            if (titleEl && translatedTexts[0]) titleEl.textContent = translatedTexts[0];
+            if (subtitleEl && translatedTexts[1]) subtitleEl.textContent = translatedTexts[1];
+
+        } catch (error) {
+            console.error('翻译失败:', error);
+        }
+    }
+
+    // 翻译文本（使用GLM模型）
+    async translateText(texts, targetLang) {
+        const apiKey = localStorage.getItem('ZHIPU_API_KEY');
+        if (!apiKey) return texts;
+
+        // 检查缓存
+        const cacheKey = `${targetLang}_${texts.join('|')}`;
+        if (this.translationCache[cacheKey]) {
+            return this.translationCache[cacheKey];
+        }
+
+        try {
+            const prompt = `Please translate the following texts to ${targetLang === 'en' ? 'English' : 'Chinese'}. Return ONLY a JSON array with the translations in the same order:\n${JSON.stringify(texts)}`;
+
+            const response = await fetch('https://open.bigmodel.cn/api/anthropic/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey
+                },
+                body: JSON.stringify({
+                    model: 'glm-4-flash',
+                    max_tokens: 1000,
+                    messages: [{
+                        role: 'user',
+                        content: prompt
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('翻译请求失败');
+            }
+
+            const data = await response.json();
+            const result = JSON.parse(data.content[0].text);
+
+            // 缓存结果
+            this.translationCache[cacheKey] = result;
+            return result;
+
+        } catch (error) {
+            console.error('翻译错误:', error);
+            return texts; // 失败时返回原文
+        }
     }
 
     // 更新节气显示
@@ -721,7 +807,7 @@ class FoodRecommendationApp {
     }
 
     // 计算并显示天干地支、农历、节气（全部合并到一行）
-    updateGanzhiDisplay(date, hours, minutes) {
+    async updateGanzhiDisplay(date, hours, minutes) {
         const ganzhi = this.chineseCalendar.calculateGanzhi(date, hours, minutes);
         const lunarDate = this.chineseCalendar.solarToLunar(date);
         const solarTerm = this.chineseCalendar.getCurrentSolarTerm(date);
@@ -757,8 +843,19 @@ class FoodRecommendationApp {
         // 合并显示:新格式 - 丙午年 丙寅月 己卯日 辛未时 2025年腊月初六 ✨ 今日小寒 ✨
         const ganzhiCompact = `${ganzhi.year} ${ganzhi.month} ${ganzhi.day} ${ganzhi.hour}`;
         const displayElement = document.getElementById('ganzhiDisplay');
-        if (displayElement) {
-            displayElement.textContent = `${ganzhiCompact}  ${lunarDate.display}${termInfo}`;
+
+        if (this.currentLanguage === 'en') {
+            // 英文模式：翻译内容
+            const textToTranslate = `${ganzhiCompact}  ${lunarDate.display}${termInfo}`;
+            const translated = await this.translateText([textToTranslate], 'en');
+            if (displayElement && translated[0]) {
+                displayElement.textContent = translated[0];
+            }
+        } else {
+            // 中文模式：直接显示
+            if (displayElement) {
+                displayElement.textContent = `${ganzhiCompact}  ${lunarDate.display}${termInfo}`;
+            }
         }
     }
 
@@ -901,57 +998,57 @@ class FoodRecommendationApp {
 
     // 应用渐变背景（当本地图片不存在时使用）
     applyGradientBackground(solarTermName, container) {
-        // 24节气中国风渐变背景（精致配色，体现节气意境）
-        const solarTermGradients = {
-            '立春': 'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)',      // 春竹新生
-            '雨水': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',      // 春雨绵绵
-            '惊蛰': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',      // 春雷始鸣
-            '春分': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',      // 春分百花
-            '清明': 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',      // 清明雨纷纷
-            '谷雨': 'linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)',      // 谷雨播种
-            '立夏': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',      // 立夏繁茂
-            '小满': 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)',      // 小满麦粒
-            '芒种': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',      // 芒种播种
-            '夏至': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',      // 夏至阳极
-            '小暑': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',      // 小暑热浪
-            '大暑': 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',      // 大暑荷花
-            '立秋': 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',      // 立秋暑去
-            '处暑': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',      // 处暑夏尽
-            '白露': 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',      // 白露成霜
-            '秋分': 'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',      // 秋分平衡
-            '寒露': 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',      // 寒露深秋
-            '霜降': 'linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)',      // 霜降露霜
-            '立冬': 'linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%)',      // 立冬收藏
-            '小雪': 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',      // 小雪寒意
-            '大雪': 'linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%)',      // 大雪银装
-            '冬至': 'linear-gradient(135deg, #c7c9d8 0%, #d7dde8 100%)',      // 冬至阳生
-            '小寒': 'linear-gradient(135deg, #e6dada 0%, #274046 100%)',      // 小寒严寒
-            '大寒': 'linear-gradient(135deg, #c9d6ff 0%, #e2e2e2 100%)',      // 大寒腊八
-            '龙抬头': 'linear-gradient(135deg, #a8e063 0%, #56ab2f 100%)'     // 龙抬头（二月二）
+        // 24节气中国风纯色背景
+        const solarTermColors = {
+            '立春': '#a8e063',      // 春竹新生
+            '雨水': '#89f7fe',      // 春雨绵绵
+            '惊蛰': '#ffecd2',      // 春雷始鸣
+            '春分': '#a8edea',      // 春分百花
+            '清明': '#d299c2',      // 清明雨纷纷
+            '谷雨': '#96fbc4',      // 谷雨播种
+            '立夏': '#ffecd2',      // 立夏繁茂
+            '小满': '#ffd89b',      // 小满麦粒
+            '芒种': '#f093fb',      // 芒种播种
+            '夏至': '#4facfe',      // 夏至阳极
+            '小暑': '#fa709a',      // 小暑热浪
+            '大暑': '#ff0844',      // 大暑荷花
+            '立秋': '#f6d365',      // 立秋暑去
+            '处暑': '#ffecd2',      // 处暑夏尽
+            '白露': '#e0c3fc',      // 白露成霜
+            '秋分': '#fddb92',      // 秋分平衡
+            '寒露': '#a1c4fd',      // 寒露深秋
+            '霜降': '#c471f5',      // 霜降露霜
+            '立冬': '#e6e9f0',      // 立冬收藏
+            '小雪': '#e0c3fc',      // 小雪寒意
+            '大雪': '#a8c0ff',      // 大雪银装
+            '冬至': '#c7c9d8',      // 冬至阳生
+            '小寒': '#e6dada',      // 小寒严寒
+            '大寒': '#c9d6ff',      // 大寒腊八
+            '龙抬头': '#a8e063'     // 龙抬头（二月二）
         };
 
-        // 传统节日中国风渐变背景
-        const festivalGradients = {
-            '春节': 'linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)',      // 春节红妆
-            '小年': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',      // 小年祭灶
-            '元宵节': 'linear-gradient(135deg, #ffd89b 0%, #19547b 100%)',    // 元宵灯火
-            '清明节': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',    // 清明踏青
-            '端午节': 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',    // 端午粽香
-            '七夕节': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',    // 七夕乞巧
-            '中秋节': 'linear-gradient(135deg, #2c3e50 0%, #fd746c 100%)',    // 中秋月圆
-            '重阳节': 'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',    // 重阳登高
-            '腊八节': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',    // 腊八粥香
-            '除夕': 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',      // 除夕守岁
-            '寒食节': 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',    // 寒食禁火
-            '中元节': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)'     // 中元节
+        // 传统节日中国风纯色背景
+        const festivalColors = {
+            '春节': '#ff416c',      // 春节红妆
+            '小年': '#f093fb',      // 小年祭灶
+            '元宵节': '#ffd89b',    // 元宵灯火
+            '清明节': '#89f7fe',    // 清明踏青
+            '端午节': '#56ab2f',    // 端午粽香
+            '七夕节': '#ffecd2',    // 七夕乞巧
+            '中秋节': '#2c3e50',    // 中秋月圆
+            '重阳节': '#fddb92',    // 重阳登高
+            '腊八节': '#ffecd2',    // 腊八粥香
+            '除夕': '#ff0844',      // 除夕守岁
+            '寒食节': '#a8edea',    // 寒食禁火
+            '中元节': '#89f7fe'     // 中元节
         };
 
         // 优先使用节日背景，然后是节气背景
-        const gradient = festivalGradients[solarTermName] || solarTermGradients[solarTermName];
-        if (gradient) {
-            container.style.background = gradient;
+        const color = festivalColors[solarTermName] || solarTermColors[solarTermName];
+        if (color) {
+            container.style.background = color;
             container.style.transition = 'background 0.5s ease';
-            console.log(`✓ 使用渐变背景: ${solarTermName}`);
+            console.log(`✓ 使用纯色背景: ${solarTermName}`);
         }
     }
 
