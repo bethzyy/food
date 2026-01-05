@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>节气调试</title>
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
+</head>
+<body>
+    <h1>节气调试 - 2026年1月6日</h1>
+    <div id="result"></div>
+
+    <script>
+        const date = new Date(2026, 0, 6); // 2026年1月6日
+        const solar = Solar.fromDate(date);
+        const lunar = solar.getLunar();
+
+        let html = '<h2>测试结果:</h2>';
+        html += '<p><strong>测试日期:</strong> ' + date.toISOString().split('T')[0] + '</p>';
+        html += '<p><strong>农历:</strong> ' + lunar.toString() + '</p>';
+
+        // 获取上一个节气
+        html += '<h3>上一个节气 (getPrevJie):</h3>';
+        try {
+            const prevJie = lunar.getPrevJie(false);
+            if (prevJie) {
+                html += '<p><strong>名称:</strong> ' + prevJie.getName() + '</p>';
+                html += '<p><strong>日期:</strong> ' + prevJie.toString() + '</p>';
+
+                const prevJieStr = prevJie.toString();
+                const match = prevJieStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (match) {
+                    const prevJieDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+                    const daysDiff = Math.floor((date - prevJieDate) / (1000 * 60 * 60 * 24));
+                    html += '<p><strong>距离今天:</strong> ' + daysDiff + ' 天</p>';
+                    html += '<p><strong>应该在0-2天内显示: ' + (daysDiff >= 0 && daysDiff <= 2 ? '是' : '否') + '</p>';
+                }
+            } else {
+                html += '<p>无法获取上一个节气</p>';
+            }
+        } catch(e) {
+            html += '<p style="color: red;">错误: ' + e.message + '</p>';
+        }
+
+        // 获取下一个节气
+        html += '<h3>下一个节气 (getNextJie):</h3>';
+        try {
+            const nextJie = lunar.getNextJie(false);
+            if (nextJie) {
+                html += '<p><strong>名称:</strong> ' + nextJie.getName() + '</p>';
+                html += '<p><strong>日期:</strong> ' + nextJie.toString() + '</p>';
+
+                const nextJieStr = nextJie.toString();
+                const match = nextJieStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (match) {
+                    const nextJieDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+                    const daysDiff = Math.floor((nextJieDate - date) / (1000 * 60 * 60 * 24));
+                    html += '<p><strong>距离今天:</strong> ' + daysDiff + ' 天</p>';
+                    html += '<p><strong>应该在0-2天内显示: ' + (daysDiff >= 0 && daysDiff <= 2 ? '是' : '否') + '</p>';
+                }
+            } else {
+                html += '<p>无法获取下一个节气</p>';
+            }
+        } catch(e) {
+            html += '<p style="color: red;">错误: ' + e.message + '</p>';
+        }
+
+        // 测试不同日期
+        html += '<h2>测试多个日期:</h2>';
+        const testDates = [
+            new Date(2026, 0, 4),  // 1月4日
+            new Date(2026, 0, 5),  // 1月5日 小寒
+            new Date(2026, 0, 6),  // 1月6日
+            new Date(2026, 0, 7),  // 1月7日
+            new Date(2026, 0, 8),  // 1月8日
+        ];
+
+        testDates.forEach(testDate => {
+            const dateStr = testDate.toISOString().split('T')[0];
+            const testSolar = Solar.fromDate(testDate);
+            const testLunar = testSolar.getLunar();
+            const prevJie = testLunar.getPrevJie(false);
+
+            let result = '';
+            if (prevJie) {
+                const prevJieStr = prevJie.toString();
+                const match = prevJieStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (match) {
+                    const prevJieDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+                    const daysDiff = Math.floor((testDate - prevJieDate) / (1000 * 60 * 60 * 24));
+
+                    if (daysDiff === 0) {
+                        result = `✨ 今日${prevJie.getName()} ✨`;
+                    } else if (daysDiff === 1) {
+                        result = `📅 昨日${prevJie.getName()}`;
+                    } else if (daysDiff === 2) {
+                        result = `📅 前日${prevJie.getName()}`;
+                    } else if (daysDiff >= 0 && daysDiff <= 14) {
+                        result = `· ${prevJie.getName()} (不在前后2天内)`;
+                    } else {
+                        result = `(距离上一个节气${daysDiff}天,不显示)`;
+                    }
+                }
+            }
+            html += `<p><strong>${dateStr}:</strong> ${result}</p>`;
+        });
+
+        document.getElementById('result').innerHTML = html;
+    </script>
+</body>
+</html>

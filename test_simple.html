@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
+</head>
+<body>
+    <h1>lunar-javascript库测试</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        const date = new Date(2026, 0, 6); // 2026年1月6日
+
+        let html = '<h2>测试日期: 2026-01-06</h2>';
+
+        try {
+            const solar = Solar.fromDate(date);
+            html += '<p>✓ Solar.fromDate() 成功</p>';
+
+            const lunar = solar.getLunar();
+            html += '<p>✓ getLunar() 成功</p>';
+            html += '<p>农历: ' + lunar.toString() + '</p>';
+
+            // 尝试不同的方法获取节气
+            html += '<hr>';
+            html += '<h3>方法1: getPrevJie(false)</h3>';
+            try {
+                const prevJie = lunar.getPrevJie(false);
+                if (prevJie) {
+                    html += '<p>名称: ' + prevJie.getName() + ', 日期: ' + prevJie.toString() + '</p>';
+                } else {
+                    html += '<p>返回null</p>';
+                }
+            } catch(e) {
+                html += '<p style="color:red">错误: ' + e.message + '</p>';
+            }
+
+            html += '<h3>方法2: getPrevJie(true)</h3>';
+            try {
+                const prevJie = lunar.getPrevJie(true);
+                if (prevJie) {
+                    html += '<p>名称: ' + prevJie.getName() + ', 日期: ' + prevJie.toString() + '</p>';
+                } else {
+                    html += '<p>返回null</p>';
+                }
+            } catch(e) {
+                html += '<p style="color:red">错误: ' + e.message + '</p>';
+            }
+
+            html += '<h3>方法3: 获取当前年所有节气</h3>';
+            try {
+                const year = lunar.getYear();
+                html += '<p>农历年份: ' + year + '</p>';
+
+                // 尝试从Solar获取年份
+                const solarYear = solar.getYear();
+                html += '<p>公历年份: ' + solarYear + '</p>';
+
+                // 获取该年的所有节气
+                const jieQiList = LunarYear.fromYear(solarYear).getJieQiList();
+                html += '<p>该年有 ' + jieQiList.length + ' 个节气</p>';
+
+                // 查找当前日期前后的节气
+                const currentTimestamp = date.getTime();
+                let closestPrev = null;
+                let closestNext = null;
+                let minPrevDiff = Infinity;
+                let minNextDiff = Infinity;
+
+                for (let i = 0; i < jieQiList.length; i++) {
+                    const jieQi = jieQiList[i];
+                    const jieQiSolar = jieQi.getSolar();
+                    const jieQiDate = jieQiSolar.toDate();
+                    const diff = currentTimestamp - jieQiDate.getTime();
+                    const daysDiff = diff / (1000 * 60 * 60 * 24);
+
+                    if (daysDiff >= 0 && daysDiff < minPrevDiff) {
+                        minPrevDiff = daysDiff;
+                        closestPrev = jieQi;
+                    }
+                    if (daysDiff < 0 && Math.abs(daysDiff) < minNextDiff) {
+                        minNextDiff = Math.abs(daysDiff);
+                        closestNext = jieQi;
+                    }
+                }
+
+                if (closestPrev) {
+                    html += '<h4>最近的上一个节气</h4>';
+                    html += '<p>名称: ' + closestPrev.getName() + '</p>';
+                    html += '<p>日期: ' + closestPrev.getSolar().toYmd() + '</p>';
+                    html += '<p><strong>距离: ' + Math.floor(minPrevDiff) + ' 天</strong></p>';
+
+                    if (minPrevDiff <= 2) {
+                        html += '<p style="color: green; font-size: 20px;">✓✓✓ 应该显示节气!</p>';
+                    }
+                }
+
+                if (closestNext) {
+                    html += '<h4>最近的下一个节气</h4>';
+                    html += '<p>名称: ' + closestNext.getName() + '</p>';
+                    html += '<p>日期: ' + closestNext.getSolar().toYmd() + '</p>';
+                    html += '<p><strong>距离: ' + Math.floor(minNextDiff) + ' 天</strong></p>';
+
+                    if (minNextDiff <= 2) {
+                        html += '<p style="color: green; font-size: 20px;">✓✓✓ 应该显示节气!</p>';
+                    }
+                }
+
+            } catch(e) {
+                html += '<p style="color:red">错误: ' + e.message + '</p>';
+                html += '<pre>' + e.stack + '</pre>';
+            }
+
+        } catch(e) {
+            html += '<p style="color: red;">致命错误: ' + e.message + '</p>';
+            html += '<pre>' + e.stack + '</pre>';
+        }
+
+        output.innerHTML = html;
+    </script>
+</body>
+</html>

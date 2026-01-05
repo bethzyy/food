@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #7cb342;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #689f38;
+        }
+        .log {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #7cb342;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        .success {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 养生饮食推荐 - 调试工具</h1>
+
+    <div class="test-section">
+        <h2>1. API Key 检查</h2>
+        <button onclick="checkApiKey()">检查API Key</button>
+        <div id="apiKeyResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 节气计算测试</h2>
+        <button onclick="testSolarTerm()">测试节气计算</button>
+        <div id="solarTermResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. API连接测试</h2>
+        <button onclick="testAPIConnection()">测试GLM API连接</button>
+        <div id="apiConnectionResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. 提示词加载测试</h2>
+        <button onclick="testPromptLoading()">测试提示词加载</button>
+        <div id="promptResult"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
+    <script>
+        // 工具函数：显示日志
+        function showLog(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const className = type === 'error' ? 'log error' :
+                             type === 'success' ? 'log success' : 'log';
+            element.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+
+        // 1. 检查API Key
+        async function checkApiKey() {
+            let logs = [];
+
+            // 检查localStorage
+            const localKey = localStorage.getItem('ZHIPU_API_KEY');
+            if (localKey) {
+                logs.push(`✅ localStorage找到API Key: ${localKey.substring(0, 10)}...`);
+            } else {
+                logs.push(`❌ localStorage中未找到API Key`);
+            }
+
+            // 检查后端API
+            try {
+                const response = await fetch('/api/env-api-key');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.apiKey) {
+                        logs.push(`✅ 后端环境变量API Key: ${data.apiKey.substring(0, 10)}...`);
+                    } else {
+                        logs.push(`⚠️ 后端返回空API Key`);
+                    }
+                } else {
+                    logs.push(`⚠️ 后端API返回状态: ${response.status}`);
+                }
+            } catch (error) {
+                logs.push(`ℹ️ 后端API不可用: ${error.message}`);
+            }
+
+            showLog('apiKeyResult', logs.join('\n'), localKey ? 'success' : 'error');
+        }
+
+        // 2. 测试节气计算
+        function testSolarTerm() {
+            try {
+                const logs = [];
+
+                // 测试lunar库是否加载
+                if (typeof Solar === 'undefined') {
+                    logs.push('❌ lunar-javascript库未加载');
+                    showLog('solarTermResult', logs.join('\n'), 'error');
+                    return;
+                }
+                logs.push('✅ lunar-javascript库已加载');
+
+                // 测试当前日期的节气
+                const now = new Date();
+                logs.push(`测试日期: ${now.toLocaleDateString()}`);
+
+                const solar = Solar.fromDate(now);
+                const lunar = solar.getLunar();
+
+                logs.push(`农历: ${lunar.getYearInGanZhi()}年 ${lunar.getMonthInChinese()}月 ${lunar.getDayInChinese()}`);
+
+                // 获取前后节气
+                const prevJie = lunar.getPrevJie(false);
+                const nextJie = lunar.getNextJie(false);
+
+                if (prevJie) {
+                    logs.push(`✅ 上一个节气: ${prevJie.getName()}`);
+                    logs.push(`   日期: ${prevJie.toYmd()}`);
+                }
+
+                if (nextJie) {
+                    logs.push(`✅ 下一个节气: ${nextJie.getName()}`);
+                    logs.push(`   日期: ${nextJie.toYmd()}`);
+                }
+
+                showLog('solarTermResult', logs.join('\n'), 'success');
+            } catch (error) {
+                showLog('solarTermResult', `❌ 错误: ${error.message}\n${error.stack}`, 'error');
+            }
+        }
+
+        // 3. 测试API连接
+        async function testAPIConnection() {
+            const logs = [];
+
+            // 获取API Key
+            let apiKey = localStorage.getItem('ZHIPU_API_KEY');
+            if (!apiKey) {
+                try {
+                    const response = await fetch('/api/env-api-key');
+                    if (response.ok) {
+                        const data = await response.json();
+                        apiKey = data.apiKey;
+                    }
+                } catch (error) {
+                    logs.push('❌ 无法获取API Key');
+                    showLog('apiConnectionResult', logs.join('\n'), 'error');
+                    return;
+                }
+            }
+
+            if (!apiKey) {
+                logs.push('❌ API Key为空');
+                showLog('apiConnectionResult', logs.join('\n'), 'error');
+                return;
+            }
+
+            logs.push(`✅ API Key: ${apiKey.substring(0, 10)}...`);
+
+            try {
+                logs.push('正在测试GLM-4-flash模型...');
+                const startTime = Date.now();
+
+                const response = await fetch('https://open.bigmodel.cn/api/anthropic/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey
+                    },
+                    body: JSON.stringify({
+                        model: 'glm-4-flash',
+                        max_tokens: 100,
+                        messages: [{
+                            role: 'user',
+                            content: '请回复"测试成功"'
+                        }]
+                    })
+                });
+
+                const elapsed = Date.now() - startTime;
+                logs.push(`响应时间: ${elapsed}ms`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    logs.push(`✅ API调用成功!`);
+                    logs.push(`返回内容: ${JSON.stringify(data.content[0].text)}`);
+                    showLog('apiConnectionResult', logs.join('\n'), 'success');
+                } else {
+                    const errorText = await response.text();
+                    logs.push(`❌ API调用失败: ${response.status}`);
+                    logs.push(`错误信息: ${errorText}`);
+                    showLog('apiConnectionResult', logs.join('\n'), 'error');
+                }
+            } catch (error) {
+                logs.push(`❌ 请求失败: ${error.message}`);
+                showLog('apiConnectionResult', logs.join('\n'), 'error');
+            }
+        }
+
+        // 4. 测试提示词加载
+        async function testPromptLoading() {
+            const logs = [];
+
+            try {
+                logs.push('正在加载提示词文件...');
+                const response = await fetch('prompts/food_recommendation_prompt.txt');
+
+                if (response.ok) {
+                    const content = await response.text();
+                    logs.push(`✅ 提示词加载成功!`);
+                    logs.push(`文件大小: ${content.length} 字符`);
+                    logs.push(`前100个字符: ${content.substring(0, 100)}...`);
+                    showLog('promptResult', logs.join('\n'), 'success');
+                } else {
+                    logs.push(`❌ 提示词加载失败: ${response.status}`);
+                    logs.push(`提示: 请确保通过HTTP服务器访问此页面`);
+                    showLog('promptResult', logs.join('\n'), 'error');
+                }
+            } catch (error) {
+                logs.push(`❌ 加载失败: ${error.message}`);
+                logs.push(`提示: 请确保通过HTTP服务器访问此页面，不要直接打开HTML文件`);
+                showLog('promptResult', logs.join('\n'), 'error');
+            }
+        }
+
+        // 页面加载时自动运行检查
+        window.onload = function() {
+            console.log('=== 调试页面加载完成 ===');
+            console.log('当前URL:', window.location.href);
+
+            if (window.location.protocol === 'file:') {
+                alert('⚠️ 警告: 您直接打开了HTML文件!\n\n请通过HTTP服务器访问:\n1. cd C:\\D\\CAIE_tool\\MyAIProduct\\food\n2. python -m http.server 8000\n3. 访问 http://localhost:8000/test_debug.html');
+            }
+        };
+    </script>
+</body>
+</html>
