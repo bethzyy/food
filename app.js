@@ -2018,6 +2018,9 @@ ${JSON.stringify(recommendation, null, 2)}
         // 显示营养分析
         this.displayNutritionChart(recommendation.totalNutrition);
 
+        // 显示底部的小红书分享按钮
+        this.showXhsShareButton(recommendation);
+
         // 不显示推荐理由
     }
 
@@ -2522,6 +2525,535 @@ ${JSON.stringify(recommendation, null, 2)}
                 }
             }
         });
+    }
+
+    // 分享到小红书
+    async shareToXiaoHongShu(recommendation) {
+        console.log('=== 开始准备小红书素材 ===');
+
+        try {
+            const shareBtn = document.getElementById('xiaohongshuShareBtnFixed');
+            if (shareBtn) {
+                shareBtn.disabled = true;
+                shareBtn.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">正在生成素材...</span>';
+            }
+
+            // 获取当前设置
+            const date = document.getElementById('dateInput').value;
+            const time = document.getElementById('timeInput').value;
+            const location = document.getElementById('locationSelect').value;
+            const weather = document.getElementById('weatherSelect').value;
+            const mealPeriod = document.querySelector('input[name="mealPeriod"]:checked').value;
+            const healthGoal = document.querySelector('input[name="healthGoal"]:checked').value;
+            const dietType = document.querySelector('input[name="dietType"]:checked').value;
+
+            // 生成唯一ID
+            const timestamp = Date.now();
+            const assetId = `${date.replace(/-/g, '')}_${mealPeriod}_${healthGoal}`;
+
+            console.log('1. 生成菜品卡片图片...');
+            const dishImage = await this.captureDishCard();
+
+            console.log('2. 生成营养概览图片...');
+            const nutritionImage = await this.captureNutritionChart();
+
+            console.log('3. 生成文字内容...');
+            // 生成小红书标题
+            const title = this.generateXiaoHongShuTitle(mealPeriod, healthGoal, weather);
+
+            // 生成小红书正文
+            const content = this.generateXiaoHongShuContent(recommendation, {
+                date, time, location, weather, mealPeriod, healthGoal, dietType
+            });
+
+            // 生成标签
+            const tags = this.generateXiaoHongShuTags(healthGoal, location, weather);
+
+            // 组合完整内容
+            const fullContent = `${title}\n\n${content}\n\n${tags}`;
+
+            // 创建素材对象
+            const assets = {
+                id: assetId,
+                timestamp: timestamp,
+                title: title,
+                content: fullContent,
+                images: {
+                    dishes: dishImage,
+                    nutrition: nutritionImage
+                },
+                metadata: {
+                    date, time, location, weather, mealPeriod, healthGoal, dietType
+                }
+            };
+
+            if (shareBtn) {
+                shareBtn.disabled = false;
+                shareBtn.innerHTML = '<span class="btn-icon">📱</span><span class="btn-text" data-i18n="button.xiaohongshu_share">一键分享到小红书</span>';
+            }
+
+            // 显示预览确认界面
+            this.showXhsPreviewModal(assets);
+
+        } catch (error) {
+            console.error('❌ 生成小红书素材失败:', error);
+
+            const shareBtn = document.getElementById('xiaohongshuShareBtnFixed');
+            if (shareBtn) {
+                shareBtn.disabled = false;
+                shareBtn.innerHTML = '<span class="btn-icon">📱</span><span class="btn-text" data-i18n="button.xiaohongshu_share">一键分享到小红书</span>';
+            }
+
+            alert('❌ 生成失败：' + error.message);
+        }
+    }
+
+    // 显示小红书分享按钮
+    showXhsShareButton(recommendation) {
+        const shareSection = document.getElementById('xiaohongshuShareSection');
+        const shareBtn = document.getElementById('xiaohongshuShareBtnFixed');
+
+        if (shareSection && shareBtn) {
+            shareSection.style.display = 'block';
+
+            // 移除旧的事件监听器（如果存在）
+            const newBtn = shareBtn.cloneNode(true);
+            shareBtn.parentNode.replaceChild(newBtn, shareBtn);
+
+            // 绑定新的事件监听器
+            newBtn.addEventListener('click', () => {
+                this.shareToXiaoHongShu(recommendation);
+            });
+
+            console.log('✓ 小红书分享按钮已显示');
+        }
+    }
+
+    // 隐藏小红书分享按钮
+    hideXhsShareButton() {
+        const shareSection = document.getElementById('xiaohongshuShareSection');
+        if (shareSection) {
+            shareSection.style.display = 'none';
+        }
+    }
+
+    // 显示小红书素材预览模态框
+    showXhsPreviewModal(assets) {
+        console.log('>>> showXhsPreviewModal');
+        console.log('  素材ID:', assets.id);
+        console.log('  标题:', assets.title);
+
+        const modal = document.getElementById('xhsPreviewModal');
+        const previewDishImage = document.getElementById('previewDishImage');
+        const previewNutritionImage = document.getElementById('previewNutritionImage');
+        const previewContent = document.getElementById('previewContent');
+        const confirmBtn = document.getElementById('confirmPreviewBtn');
+        const cancelBtn = document.getElementById('cancelPreviewBtn');
+
+        // 设置预览内容
+        console.log('✓ 设置预览内容...');
+        previewDishImage.src = assets.images.dishes;
+        previewNutritionImage.src = assets.images.nutrition;
+        previewContent.value = assets.content;
+
+        console.log('  - 菜品图片长度:', assets.images.dishes.length);
+        console.log('  - 营养图片长度:', assets.images.nutrition.length);
+        console.log('  - 文字内容长度:', assets.content.length);
+
+        // 显示模态框
+        modal.style.display = 'flex';
+        console.log('✓ 预览模态框已显示');
+
+        // 下载菜品图片按钮
+        const downloadDishBtn = document.getElementById('downloadDishImgBtn');
+        downloadDishBtn.onclick = () => {
+            this.downloadImage(assets.images.dishes, `菜品卡片_${assets.id}.png`);
+        };
+
+        // 下载营养图片按钮
+        const downloadNutritionBtn = document.getElementById('downloadNutritionImgBtn');
+        downloadNutritionBtn.onclick = () => {
+            this.downloadImage(assets.images.nutrition, `营养概览_${assets.id}.png`);
+        };
+
+        // 确认按钮事件
+        confirmBtn.onclick = async () => {
+            console.log('>>> 用户点击确认按钮');
+            try {
+                // 保存素材
+                console.log('1. 保存素材到localStorage...');
+                this.saveXiaoHongShuAssets(assets);
+
+                // 复制文字到剪贴板
+                console.log('2. 复制文字到剪贴板...');
+                await navigator.clipboard.writeText(assets.content);
+                console.log('✓ 文字已复制到剪贴板');
+
+                // 关闭模态框
+                modal.style.display = 'none';
+                console.log('3. 预览模态框已关闭');
+
+                // 显示成功提示
+                alert(`✅ 小红书素材已准备完成！\n\n📝 文字内容已复制到剪贴板\n🖼️ 图片已在预览中显示\n\n素材编号：${assets.id}\n\n接下来：\n1. 打开小红书APP\n2. 点击发布按钮\n3. 粘贴文字内容\n4. 点击下方"下载"按钮保存图片，然后在小红书中上传\n\n提示：请先下载图片到本地，再从小红书相册选择上传`);
+
+                console.log('✓ 素材已确认并保存');
+                console.log('<<< showXhsPreviewModal 确认流程完成');
+            } catch (error) {
+                console.error('❌ 保存失败:', error);
+                alert('❌ 保存失败：' + error.message);
+            }
+        };
+
+        // 取消按钮事件
+        cancelBtn.onclick = () => {
+            modal.style.display = 'none';
+            console.log('✓ 用户点击取消，预览模态框已关闭');
+            console.log('<<< showXhsPreviewModal 取消流程');
+        };
+
+        // 点击背景关闭
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                console.log('✓ 用户点击背景，预览模态框已关闭');
+                console.log('<<< showXhsPreviewModal 取消流程');
+            }
+        };
+    }
+
+    // 截取菜品卡片为图片
+    async captureDishCard() {
+        console.log('>>> captureDishCard 开始');
+        const dishGrid = document.querySelector('.dish-grid');
+        if (!dishGrid) {
+            console.error('❌ 未找到.dish-grid元素');
+            throw new Error('未找到菜品区域');
+        }
+
+        console.log('✓ 找到菜品区域，开始生成图片...');
+        console.log('  - 元素尺寸:', dishGrid.offsetWidth, 'x', dishGrid.offsetHeight);
+
+        try {
+            const startTime = Date.now();
+            const canvas = await html2canvas(dishGrid, {
+                backgroundColor: '#ffffff',
+                scale: 2, // 提高图片质量
+                logging: false,
+                useCORS: true,
+                allowTaint: true
+            });
+
+            const elapsed = Date.now() - startTime;
+            console.log(`✓ 菜品图片生成完成，耗时: ${elapsed}ms`);
+            console.log('  - Canvas尺寸:', canvas.width, 'x', canvas.height);
+
+            const dataUrl = canvas.toDataURL('image/png', 0.9);
+            console.log('✓ 转换为DataURL完成，长度:', dataUrl.length, '字符');
+            console.log('<<< captureDishCard 结束');
+
+            return dataUrl;
+        } catch (error) {
+            console.error('❌ 生成菜品图片失败:', error);
+            throw error;
+        }
+    }
+
+    // 截取营养图表为图片
+    async captureNutritionChart() {
+        console.log('>>> captureNutritionChart 开始');
+        const nutritionCard = document.getElementById('nutritionCard');
+        if (!nutritionCard) {
+            console.error('❌ 未找到#nutritionCard元素');
+            throw new Error('未找到营养图表区域');
+        }
+
+        console.log('✓ 找到营养图表区域，开始生成图片...');
+        console.log('  - 元素尺寸:', nutritionCard.offsetWidth, 'x', nutritionCard.offsetHeight);
+        console.log('  - 显示状态:', nutritionCard.style.display);
+
+        try {
+            const startTime = Date.now();
+            const canvas = await html2canvas(nutritionCard, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                logging: false,
+                useCORS: true,
+                allowTaint: true
+            });
+
+            const elapsed = Date.now() - startTime;
+            console.log(`✓ 营养图表图片生成完成，耗时: ${elapsed}ms`);
+            console.log('  - Canvas尺寸:', canvas.width, 'x', canvas.height);
+
+            const dataUrl = canvas.toDataURL('image/png', 0.9);
+            console.log('✓ 转换为DataURL完成，长度:', dataUrl.length, '字符');
+            console.log('<<< captureNutritionChart 结束');
+
+            return dataUrl;
+        } catch (error) {
+            console.error('❌ 生成营养图表图片失败:', error);
+            throw error;
+        }
+    }
+
+    // 保存小红书素材到本地存储
+    saveXiaoHongShuAssets(assets) {
+        console.log('>>> saveXiaoHongShuAssets');
+        console.log('  素材ID:', assets.id);
+        console.log('  标题:', assets.title);
+        console.log('  内容长度:', assets.content.length);
+        console.log('  有菜品图:', !!assets.images.dishes);
+        console.log('  有营养图:', !!assets.images.nutrition);
+
+        let savedAssets = JSON.parse(localStorage.getItem('xiaohongshu_assets') || '[]');
+        console.log('  当前已有', savedAssets.length, '条素材');
+
+        savedAssets.unshift(assets); // 最新的放在前面
+
+        // 只保留最近30条
+        if (savedAssets.length > 30) {
+            savedAssets = savedAssets.slice(0, 30);
+            console.log('  删除旧素材，保留最近30条');
+        }
+
+        try {
+            localStorage.setItem('xiaohongshu_assets', JSON.stringify(savedAssets));
+            console.log('✓ 素材已保存到localStorage');
+            console.log('  - 当前共有', savedAssets.length, '条素材');
+            console.log('  - 存储大小:', JSON.stringify(savedAssets).length, '字符');
+            console.log('<<< saveXiaoHongShuAssets');
+        } catch (error) {
+            console.error('❌ 保存素材失败:', error);
+            throw error;
+        }
+    }
+
+    // 获取所有小红书素材
+    getXiaoHongShuAssets() {
+        return JSON.parse(localStorage.getItem('xiaohongshu_assets') || '[]');
+    }
+
+    // 删除指定素材
+    deleteXiaoHongShuAsset(assetId) {
+        let savedAssets = this.getXiaoHongShuAssets();
+        savedAssets = savedAssets.filter(asset => asset.id !== assetId);
+        localStorage.setItem('xiaohongshu_assets', JSON.stringify(savedAssets));
+    }
+
+    // 清空所有素材
+    clearXiaoHongShuAssets() {
+        localStorage.removeItem('xiaohongshu_assets');
+    }
+
+    // 下载图片到本地
+    downloadImage(dataUrl, filename) {
+        console.log('>>> downloadImage');
+        console.log('  文件名:', filename);
+        console.log('  DataURL长度:', dataUrl.length);
+
+        try {
+            // 创建一个临时的a标签
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = filename;
+
+            // 添加到文档中
+            document.body.appendChild(link);
+
+            // 触发点击
+            link.click();
+
+            // 移除元素
+            document.body.removeChild(link);
+
+            console.log('✓ 图片下载触发成功');
+            console.log('<<< downloadImage');
+        } catch (error) {
+            console.error('❌ 下载图片失败:', error);
+            alert('❌ 下载失败：' + error.message);
+        }
+    }
+
+    // 生成小红书标题
+    generateXiaoHongShuTitle(mealPeriod, healthGoal, weather) {
+        console.log('>>> generateXiaoHongShuTitle');
+        console.log('  参数:', { mealPeriod, healthGoal, weather });
+
+        const emojiMap = {
+            '早餐': '🌅',
+            '午餐': '☀️',
+            '晚餐': '🌙'
+        };
+
+        const goalEmojiMap = {
+            '健脾': '🫐',
+            '安神': '😴',
+            '清火': '🔥',
+            '美白': '✨',
+            '祛湿': '💧'
+        };
+
+        const emoji = emojiMap[mealPeriod] || '🍲';
+        const goalEmoji = goalEmojiMap[healthGoal] || '💪';
+
+        // 有内涵的标题模板
+        const templates = [
+            `${emoji}${weather}${healthGoal}食疗｜${mealPeriod}顺时而食`,
+            `${emoji}${goalEmoji} ${healthGoal}方｜${mealPeriod}养生录`,
+            `${emoji} ${weather}${healthGoal}必吃｜中医食疗`,
+            `${goalEmoji} 时令${healthGoal}｜${mealPeriod}这样吃`,
+            `${emoji}${weather}${healthGoal}调理｜${mealPeriod}良方`,
+            `📖 ${healthGoal}食疗｜${mealPeriod}顺时养生`,
+        ];
+
+        // 随机选择一个模板
+        const randomIndex = Math.floor(Math.random() * templates.length);
+        const title = templates[randomIndex];
+        console.log('✓ 标题生成完成:', title);
+        console.log('<<< generateXiaoHongShuTitle');
+        return title;
+    }
+
+    // 生成小红书正文（简短精悍有内涵）
+    generateXiaoHongShuContent(recommendation, settings) {
+        console.log('>>> generateXiaoHongShuContent');
+        console.log('  参数:', settings);
+        console.log('  推荐数据类型:', typeof recommendation);
+        console.log('  有综合建议:', !!recommendation.overallAdvice);
+        console.log('  有菜品:', !!(recommendation.items && recommendation.items.length));
+        console.log('  有营养:', !!recommendation.totalNutrition);
+
+        let content = '';
+
+        // 【核心信息】
+        content += `📅 ${settings.date}｜${settings.location}｜${settings.weather}\n`;
+        content += `🎯 ${settings.healthGoal}调理\n\n`;
+
+        // 【中医理论】天气养生（一句话）
+        const weatherTCM = {
+            '晴': '☀️ 阳气升发易伤津，宜食滋润生津之物',
+            '多云': '⛅ 阴阳平和时，饮食宜温凉平衡',
+            '阴': '☁️ 阳气不足易郁结，宜食辛散舒畅',
+            '雨': '🌧️ 湿邪过重困脾土，宜食健脾祛湿',
+            '雪': '❄️ 寒邪凝滞伤阳气，宜食温补散寒',
+            '雾': '🌫️ 邪气入肺伤肺阴，宜食清肺润燥',
+            '大风': '💨 风邪袭表伤卫气，宜食防风固表',
+            '沙尘': '🏜️ 燥热伤肺耗肺阴，宜食清热润肺'
+        };
+        content += `💡 ${weatherTCM[settings.weather]}\n\n`;
+
+        // 【综合建议】精华版（100字内）
+        if (recommendation.overallAdvice) {
+            content += `📜【养生要义】\n${recommendation.overallAdvice.substring(0, 100)}...\n\n`;
+        }
+
+        // 【食谱推荐】
+        const items = recommendation.items || [];
+        if (items.length > 0) {
+            items.forEach((dish, index) => {
+                content += `━━━━━━━━━━━━━━\n`;
+                content += `【${index + 1}】${dish.name}\n`;
+                content += `━━━━━━━━━━━━━━\n`;
+
+                // 食材（保留性味）
+                if (dish.ingredients && Array.isArray(dish.ingredients)) {
+                    content += `🌿 配方：`;
+                    const ingredients = dish.ingredients.map(ing => {
+                        if (typeof ing === 'object') {
+                            return `${ing.item}${ing.effect ? '（' + ing.effect.substring(0, 8) + '）' : ''}`;
+                        }
+                        return ing;
+                    }).join('、');
+                    content += `${ingredients}\n`;
+                }
+
+                // 简化做法（关键步骤）
+                if (dish.recipe && Array.isArray(dish.recipe)) {
+                    content += `👨‍🍳 要点：${dish.recipe[0]} → ${dish.recipe[dish.recipe.length - 1]}\n`;
+                }
+
+                // 功效
+                if (dish.nutrition && dish.nutrition.description) {
+                    content += `💎 功效：${dish.nutrition.description.substring(0, 40)}\n`;
+                }
+                content += `\n`;
+            });
+        }
+
+        // 【营养数据】
+        if (recommendation.totalNutrition) {
+            const tn = recommendation.totalNutrition;
+            content += `📊 营养：`;
+            if (tn.calories) content += `${tn.calories}kcal｜`;
+            if (tn.protein) content += `蛋白${tn.protein.amount}g｜`;
+            if (tn.carbs) content += `碳水${tn.carbs.amount}g\n`;
+            content += `✅ 三大营养素配比科学\n\n`;
+        }
+
+        // 【总结】
+        content += `━━━━━━━━━━━━━━\n`;
+        content += `✅ 顺时：${settings.weather}天气${settings.healthGoal}\n`;
+        content += `✅ 应地：适合${settings.location}体质\n`;
+        content += `✅ 营养：符合膳食指南标准\n\n`;
+
+        // 【互动】
+        content += `💬 你的${settings.mealPeriod}养生食谱是什么？\n`;
+        content += `👇 评论区交流吧～\n\n`;
+        content += `✨ 关注｜每日时令食疗分享\n`;
+        content += `📍 城市·天气·体质 专属推荐\n`;
+        content += `⭐ 点赞收藏，分享给需要的人`;
+
+        console.log('✓ 正文生成完成');
+        console.log('  - 总长度:', content.length, '字符');
+        console.log('  - 行数:', content.split('\n').length);
+        console.log('<<< generateXiaoHongShuContent');
+
+        return content;
+    }
+
+    // 生成小红书标签
+    generateXiaoHongShuTags(healthGoal, location, weather) {
+        console.log('>>> generateXiaoHongShuTags');
+        console.log('  参数:', { healthGoal, location, weather });
+
+        const tags = [];
+
+        // 基础标签
+        tags.push('#养生膳食');
+        tags.push('#时令养生');
+        tags.push('#健康饮食');
+
+        // 目标标签
+        const goalTags = {
+            '健脾': '#健脾养胃',
+            '安神': '#安神助眠',
+            '清火': '#清热降火',
+            '美白': '#美白养颜',
+            '祛湿': '#祛湿养生'
+        };
+        if (goalTags[healthGoal]) {
+            tags.push(goalTags[healthGoal]);
+        }
+
+        // 地域标签
+        tags.push(`#${location}美食`);
+
+        // 天气标签
+        if (weather === '晴') tags.push('#晴天');
+        if (weather === '雨') tags.push('#雨天美食');
+        if (weather === '雪') tags.push('#冬日暖心');
+
+        // 额外标签
+        tags.push('#美食分享');
+        tags.push('#膳食推荐');
+        tags.push('#养生日常');
+
+        const tagsStr = tags.join(' ');
+        console.log('✓ 标签生成完成，共', tags.length, '个标签');
+        console.log('  - 标签:', tagsStr);
+        console.log('<<< generateXiaoHongShuTags');
+
+        return tagsStr;
     }
 }
 

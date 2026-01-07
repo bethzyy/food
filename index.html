@@ -187,6 +187,14 @@
             </section>
         </main>
 
+        <!-- 小红书分享按钮（固定在页面底部） -->
+        <div id="xiaohongshuShareSection" class="xhs-share-fixed" style="display: none;">
+            <button id="xiaohongshuShareBtnFixed" class="xiaohongshu-btn">
+                <span class="btn-icon">📱</span>
+                <span class="btn-text" data-i18n="button.xiaohongshu_share">一键分享到小红书</span>
+            </button>
+        </div>
+
         <!-- 页脚 -->
         <footer class="app-footer">
             <p data-i18n="footer.motto">秉承中医养生之道</p>
@@ -215,10 +223,60 @@
         </div>
     </div>
 
+    <!-- 小红书素材预览模态框 -->
+    <div id="xhsPreviewModal" class="modal" style="display: none;">
+        <div class="modal-content xhs-preview-content">
+            <h2>📱 小红书素材预览</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                请确认以下素材，确认后将保存到浏览器并复制文字内容
+            </p>
+
+            <div class="preview-grid">
+                <!-- 菜品图片预览 -->
+                <div class="preview-item">
+                    <h3>🍽️ 菜品卡片</h3>
+                    <div class="preview-image-container">
+                        <img id="previewDishImage" class="preview-image" alt="菜品卡片">
+                    </div>
+                </div>
+
+                <!-- 营养图表预览 -->
+                <div class="preview-item">
+                    <h3>📊 营养概览</h3>
+                    <div class="preview-image-container">
+                        <img id="previewNutritionImage" class="preview-image" alt="营养图表">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文字内容预览 -->
+            <div class="preview-text">
+                <h3>📝 文字内容</h3>
+                <textarea id="previewContent" readonly></textarea>
+                <div class="download-hint">
+                    💡 提示：右键点击图片可"图片另存为"到本地
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="preview-actions">
+                <button id="cancelPreviewBtn" class="secondary-btn">取消</button>
+                <button id="downloadDishImgBtn" class="download-btn">📥 下载菜品图</button>
+                <button id="downloadNutritionImgBtn" class="download-btn">📥 下载营养图</button>
+                <button id="confirmPreviewBtn" class="xiaohongshu-btn">
+                    <span class="btn-icon">✅</span>
+                    <span class="btn-text">确认并保存</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 引入Chart.js用于图表 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- 引入lunar-javascript农历库 -->
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
+    <!-- 引入html2canvas用于截图 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <!-- 引入国际化系统 -->
     <script src="i18n.js?v=31"></script>
     <script src="app.js?v=37"></script>

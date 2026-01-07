@@ -30,6 +30,7 @@ const i18n = {
             'button.save': '保存',
             'button.generating': '正在生成...',
             'button.generating_short': '生成推荐',
+            'button.xiaohongshu_share': '📱 一键分享到小红书',
 
             // API Key模态框
             'modal.apikey.title': '🔑 配置API Key',
@@ -194,6 +195,7 @@ const i18n = {
             'button.save': 'Save',
             'button.generating': 'Generating...',
             'button.generating_short': 'Generate',
+            'button.xiaohongshu_share': '📱 Share to XiaoHongShu',
 
             // API Key模态框
             'modal.apikey.title': '🔑 Configure API Key',
