@@ -12,6 +12,7 @@ import os
 import sys
 import json
 from urllib.parse import urlparse, parse_qs
+from pathlib import Path
 import _thread as thread
 
 # 设置Windows控制台编码
@@ -25,6 +26,18 @@ if sys.platform == 'win32':
 
 PORT = 8004
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+
+# 从.env文件加载环境变量
+env_file = Path(DIRECTORY) / '.env'
+if env_file.exists():
+    print(f"[INFO] 读取.env文件: {env_file}")
+    with open(env_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ[key.strip()] = value.strip()
+                print(f"[OK] {key} = {value[:10]}...{value[-4:]}")
 
 class APIKeyHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):

@@ -226,6 +226,10 @@ body {
     letter-spacing: 1px;
 }
 
+.section-icon {
+    flex-shrink: 0;
+}
+
 /* 日期时间容器 */
 .datetime-container {
     display: grid;
@@ -353,11 +357,36 @@ body {
 
 /* 单选按钮组 */
 .meal-period,
-.diet-type {
+.meal-period-row,
+.diet-type,
+.health-goal {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     margin-bottom: 10px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+}
+
+/* 早中晚按钮样式 - 平均分配宽度 */
+.meal-period-row {
+    justify-content: space-between;
+    margin-top: 12px;
+    gap: 8px;
+}
+
+.meal-period-row .radio-label {
+    flex: 1 1 33.333%;
+    min-width: 0;
+}
+
+/* 健康目标小按钮样式 - 平均分配宽度 */
+.health-goal {
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.health-goal .radio-label {
+    flex: 1 1 20%;  /* 5个按钮，每个20% */
+    min-width: 0;
 }
 
 .radio-label {
@@ -530,34 +559,88 @@ body {
 
 /* 菜品网格布局 */
 .dish-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     margin-bottom: 30px;
 }
 
-/* 菜品卡片 */
-.dish-card {
+/* 整体建议卡片 */
+.overall-advice-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(240, 248, 255, 0.85) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 25px;
+    border: 2px solid rgba(100, 180, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.advice-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.advice-content {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #333;
+    white-space: pre-wrap;
+}
+
+/* 简化的菜品条目 */
+.dish-item {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-    border-left: 4px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 16px 20px;
     border: 1px solid rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
 }
 
-.dish-card:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+.dish-item:hover {
     background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 菜品主要内容 - 扁平化结构 */
-.dish-card {
-    padding: 12px;
+.dish-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+/* 菜品类型标签 - 小字号括号格式 */
+.dish-type-label {
+    font-size: 14px;
+    font-weight: normal;
+    color: var(--text-secondary);
+    margin-left: 8px;
+}
+
+.dish-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dish-ingredients {
+    font-size: 14px;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.dish-nutrition {
+    font-size: 13px;
+    color: var(--text-light);
+    font-weight: 500;
 }
 
 /* 小类型徽章 */
@@ -932,6 +1015,17 @@ body.winter {
 /* 环境信息综合板块 */
 .environment-section {
     padding: 12px;
+}
+
+/* 农历节气显示 - 放在标题右侧 */
+.lunar-term-display {
+    padding: 0;
+    margin: 0;
+    margin-left: auto;  /* 推到右边 */
+    font-size: 14px;
+    font-weight: 500;
+    text-align: right;
+    color: var(--text-primary);
 }
 
 .env-block {
@@ -1427,7 +1521,9 @@ body[data-solar-term="大寒"] .ganzhi-display {
     }
 
     .meal-period,
-    .diet-type {
+    .meal-period-row,
+    .diet-type,
+    .health-goal {
         flex-direction: column;
     }
 

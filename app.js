@@ -118,6 +118,9 @@ class ChineseCalendar {
     // 动态计算当前节气 - 使用lunar-javascript库
     getCurrentSolarTerm(date) {
         try {
+            console.log('=== getCurrentSolarTerm 开始 ===');
+            console.log('输入日期:', date.toISOString().split('T')[0]);
+
             // 使用lunar库获取精确的节气
             const solar = Solar.fromDate(date);
             const lunar = solar.getLunar();
@@ -127,49 +130,56 @@ class ChineseCalendar {
             // 获取下一个节气
             const nextJie = lunar.getNextJie(false);
 
+            console.log('上一个节气:', prevJie);
+            console.log('下一个节气:', nextJie);
+
             let result = null;
 
             if (prevJie) {
-                // Jie对象直接有toString()方法可以获取日期字符串
-                const prevJieStr = prevJie.toString();
-                // 从字符串中提取年月日 (格式: 2024-01-05)
-                const match = prevJieStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-                if (match) {
-                    const prevJieDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
-                    const daysDiff = Math.floor((date - prevJieDate) / (1000 * 60 * 60 * 24));
+                // Jie对象有 getSolarDate() 方法获取确切日期
+                const prevJieDate = prevJie.getSolarDate();
+                console.log('上一个节气日期对象:', prevJieDate);
+                console.log('上一个节气日期字符串:', prevJieDate.toYmd()); // 格式: 20260105
 
-                    // 如果在上一个节气后0-14天内,显示该节气
-                    if (daysDiff >= 0 && daysDiff < 15) {
-                        result = {
-                            name: prevJie.getName(),
-                            month: parseInt(match[2]),
-                            dayRange: [parseInt(match[3]), parseInt(match[3])]
-                        };
-                    }
+                const daysDiff = Math.floor((date - prevJieDate) / (1000 * 60 * 60 * 24));
+                console.log('距离上一个节气天数:', daysDiff);
+
+                // 如果在上一个节气后0-14天内,显示该节气
+                if (daysDiff >= 0 && daysDiff < 15) {
+                    result = {
+                        name: prevJie.getName(),
+                        month: null,
+                        dayRange: [null, null]
+                    };
+                    console.log('✓ 使用上一个节气:', result.name);
                 }
             }
 
             // 检查下一个节气是否在2天以内
             if (nextJie && !result) {
-                const nextJieStr = nextJie.toString();
-                const match = nextJieStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-                if (match) {
-                    const nextJieDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
-                    const daysDiff = Math.floor((nextJieDate - date) / (1000 * 60 * 60 * 24));
+                const nextJieDate = nextJie.getSolarDate();
+                console.log('下一个节气日期对象:', nextJieDate);
+                console.log('下一个节气日期字符串:', nextJieDate.toYmd());
 
-                    if (daysDiff >= 0 && daysDiff <= 2) {
-                        result = {
-                            name: nextJie.getName(),
-                            month: parseInt(match[2]),
-                            dayRange: [parseInt(match[3]), parseInt(match[3])]
-                        };
-                    }
+                const daysDiff = Math.floor((nextJieDate - date) / (1000 * 60 * 60 * 24));
+                console.log('距离下一个节气天数:', daysDiff);
+
+                if (daysDiff >= 0 && daysDiff <= 2) {
+                    result = {
+                        name: nextJie.getName(),
+                        month: null,
+                        dayRange: [null, null]
+                    };
+                    console.log('✓ 使用下一个节气:', result.name);
                 }
             }
 
+            console.log('getCurrentSolarTerm 返回:', result);
+            console.log('=== getCurrentSolarTerm 结束 ===');
             return result;
         } catch (error) {
             console.error('节气计算错误:', error);
+            console.error('错误堆栈:', error.stack);
             // 降级到简化算法
             return this.fallbackGetSolarTerm(date);
         }
@@ -380,8 +390,9 @@ class FoodRecommendationApp {
         this.chineseCalendar = new ChineseCalendar();
         this.nutritionChart = null;
         this.logger = new LogManager();
-        this.translationCache = {}; // 翻译缓存
         this.currentLanguage = 'zh'; // 当前语言
+        this.cachedRecommendation = null; // 缓存的推荐结果
+        this.promptCache = {}; // 提示词模板缓存
 
         console.log('✓ 核心组件初始化完成');
         console.log('  - ChineseCalendar: 已创建');
@@ -449,11 +460,23 @@ class FoodRecommendationApp {
         const timeInput = document.getElementById('timeInput');
         timeInput.addEventListener('change', () => {
             this.updateSolarTermDisplay();
+            // 根据时间自动更新早中晚
+            const timeValue = timeInput.value;
+            if (timeValue) {
+                const hours = timeValue.split(':')[0];
+                this.autoSetMealPeriod(hours);
+            }
         });
         // 添加 input 事件监听器，确保实时更新
         timeInput.addEventListener('input', () => {
             setTimeout(() => {
                 this.updateSolarTermDisplay();
+                // 根据时间自动更新早中晚
+                const timeValue = timeInput.value;
+                if (timeValue) {
+                    const hours = timeValue.split(':')[0];
+                    this.autoSetMealPeriod(hours);
+                }
             }, 10);
         });
 
@@ -517,15 +540,18 @@ class FoodRecommendationApp {
         const mealPeriod = parseInt(hours);
         let period;
 
-        if (mealPeriod >= 5 && mealPeriod < 9) {
+        // 更合理的时间划分
+        // 早餐：5:00-10:00
+        // 午餐：10:00-16:00
+        // 晚餐：16:00-22:00（晚上10点前都算晚餐）
+        // 深夜（22:00-5:00）也设置为晚餐（夜宵时段）
+        if (mealPeriod >= 5 && mealPeriod < 10) {
             period = '早餐';
-        } else if (mealPeriod >= 11 && mealPeriod < 14) {
+        } else if (mealPeriod >= 10 && mealPeriod < 16) {
             period = '午餐';
-        } else if (mealPeriod >= 17 && mealPeriod < 20) {
-            period = '晚餐';
         } else {
-            // 默认设置为午餐
-            period = '午餐';
+            // 16:00到次日5:00都是晚餐时间
+            period = '晚餐';
         }
 
         document.querySelector(`input[name="mealPeriod"][value="${period}"]`).checked = true;
@@ -734,58 +760,75 @@ class FoodRecommendationApp {
         console.log('语言已切换为:', lang);
         this.currentLanguage = lang;
 
-        if (lang === 'en') {
-            // 翻译页面文本
-            await this.translatePage();
+        // 翻译现在完全由i18n.js处理,不需要额外的AI翻译
+
+        // 如果有缓存的推荐结果,翻译它
+        if (this.cachedRecommendation) {
+            console.log('检测到缓存的推荐结果,开始翻译...');
+            await this.translateCachedRecommendation();
         }
 
         // 重新更新节气显示
         this.updateSolarTermDisplay();
     }
 
-    // 翻译页面内容
-    async translatePage() {
+    // 翻译缓存的推荐结果
+    async translateCachedRecommendation() {
         try {
-            const apiKey = localStorage.getItem('ZHIPU_API_KEY');
-            if (!apiKey) {
-                console.log('未找到API Key，跳过翻译');
-                return;
-            }
+            const targetLang = this.currentLanguage === 'en' ? '英语' : '中文';
+            console.log('开始翻译推荐内容到:', targetLang);
 
-            // 收集需要翻译的文本
-            const textsToTranslate = [
-                document.querySelector('.app-header h1').textContent,
-                document.querySelector('.subtitle').textContent,
-            ];
+            // 显示翻译加载提示
+            const resultSection = document.getElementById('resultSection');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'translation-loading';
+            loadingDiv.innerHTML = `<p class="loading-text">🔄 ${i18n.t('loading.translating')}</p>`;
+            resultSection.insertBefore(loadingDiv, resultSection.firstChild);
 
-            // 调用翻译API
-            const translatedTexts = await this.translateText(textsToTranslate, 'en');
+            // 调用AI翻译整个推荐结果
+            const translated = await this.translateRecommendation(this.cachedRecommendation, targetLang);
 
-            // 更新页面文本
-            const titleEl = document.querySelector('.app-header h1');
-            const subtitleEl = document.querySelector('.subtitle');
+            // 更新缓存
+            this.cachedRecommendation = translated;
 
-            if (titleEl && translatedTexts[0]) titleEl.textContent = translatedTexts[0];
-            if (subtitleEl && translatedTexts[1]) subtitleEl.textContent = translatedTexts[1];
+            // 重新显示
+            this.displayRecommendation(translated);
 
+            // 移除加载提示
+            loadingDiv.remove();
+
+            console.log('✓ 推荐内容翻译完成');
         } catch (error) {
-            console.error('翻译失败:', error);
+            console.error('翻译推荐内容失败:', error);
         }
     }
 
-    // 翻译文本（使用GLM模型）
-    async translateText(texts, targetLang) {
+    // 翻译推荐结果
+    async translateRecommendation(recommendation, targetLang) {
         const apiKey = localStorage.getItem('ZHIPU_API_KEY');
-        if (!apiKey) return texts;
-
-        // 检查缓存
-        const cacheKey = `${targetLang}_${texts.join('|')}`;
-        if (this.translationCache[cacheKey]) {
-            return this.translationCache[cacheKey];
+        if (!apiKey) {
+            console.log('未找到API Key，跳过翻译');
+            return recommendation;
         }
 
         try {
-            const prompt = `Please translate the following texts to ${targetLang === 'en' ? 'English' : 'Chinese'}. Return ONLY a JSON array with the translations in the same order:\n${JSON.stringify(texts)}`;
+            console.log('开始翻译推荐内容...');
+            console.log('目标语言:', targetLang);
+            console.log('原始数据:', JSON.stringify(recommendation, null, 2).substring(0, 500) + '...');
+
+            const prompt = `请将以下饮食推荐内容翻译成${targetLang}。
+要求:
+1. 保持JSON结构完全不变
+2. 只翻译文本内容(菜品名称、食材、制作步骤、功效、reasoning、tips等)
+3. 不要翻译数字、单位、字段名、JSON键名
+4. 确保返回有效的JSON格式
+
+待翻译内容:
+\`\`\`json
+${JSON.stringify(recommendation, null, 2)}
+\`\`\`
+
+请直接返回翻译后的JSON,不要有其他说明文字。`;
 
             const response = await fetch('https://open.bigmodel.cn/api/anthropic/v1/messages', {
                 method: 'POST',
@@ -795,7 +838,7 @@ class FoodRecommendationApp {
                 },
                 body: JSON.stringify({
                     model: 'glm-4-flash',
-                    max_tokens: 1000,
+                    max_tokens: 4000,
                     messages: [{
                         role: 'user',
                         content: prompt
@@ -808,20 +851,38 @@ class FoodRecommendationApp {
             }
 
             const data = await response.json();
+            console.log('API响应成功,开始解析...');
 
-            // 移除可能存在的markdown代码块标记
+            // 移除markdown代码块标记
             let responseText = data.content[0].text;
             responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
+            console.log('解析后的JSON:', responseText.substring(0, 300) + '...');
+
             const result = JSON.parse(responseText);
 
-            // 缓存结果
-            this.translationCache[cacheKey] = result;
+            // 确保items字段存在
+            if (result.dishes && !result.items) {
+                result.items = result.dishes;
+            }
+            if (result.teas && !result.items) {
+                result.items = result.teas;
+            }
+
+            console.log('✓ 翻译成功');
+            console.log('翻译后数据结构:', {
+                hasItems: !!result.items,
+                itemsLength: result.items?.length || 0,
+                firstItemName: result.items?.[0]?.name || 'N/A'
+            });
+
             return result;
 
         } catch (error) {
-            console.error('翻译错误:', error);
-            return texts; // 失败时返回原文
+            console.error('❌ 翻译失败:', error);
+            console.error('错误详情:', error.message);
+            console.error('错误堆栈:', error.stack);
+            return recommendation; // 失败时返回原内容
         }
     }
 
@@ -841,15 +902,13 @@ class FoodRecommendationApp {
         this.updateSolarTermUIEffects(date);
     }
 
-    // 计算并显示天干地支、农历、节气（全部合并到一行）
+    // 计算并显示农历、节气（不包含天干地支）
     updateGanzhiDisplay(date, hours, minutes) {
         console.log('=== updateGanzhiDisplay 开始 ===');
         console.log('输入日期:', date.toISOString().split('T')[0], '时间:', hours, ':', minutes);
 
-        const ganzhi = this.chineseCalendar.calculateGanzhi(date, hours, minutes);
         const lunarDate = this.chineseCalendar.solarToLunar(date);
 
-        console.log('天干地支:', ganzhi);
         console.log('农历:', lunarDate);
 
         // 使用新的方法获取节气关系
@@ -883,15 +942,14 @@ class FoodRecommendationApp {
         }
         // 注意:如果不在节气前后2天内,不显示任何节气信息
 
-        // 合并显示:新格式 - 丙午年 丙寅月 己卯日 辛未时 2025年腊月初六 ✨ 今日小寒 ✨
-        const ganzhiCompact = `${ganzhi.year} ${ganzhi.month} ${ganzhi.day} ${ganzhi.hour}`;
+        // 合并显示:新格式 - 2025年腊月初六 ✨ 今日小寒 ✨
         const displayElement = document.getElementById('ganzhiDisplay');
 
-        console.log('最终显示内容:', ganzhiCompact, '+', lunarDate.display, '+', termInfo);
+        console.log('最终显示内容:', lunarDate.display, '+', termInfo);
 
-        // 直接显示中文（天干地支、农历、节气保持中文,避免频繁API调用）
+        // 直接显示中文（农历、节气保持中文,避免频繁API调用）
         if (displayElement) {
-            displayElement.textContent = `${ganzhiCompact}  ${lunarDate.display}${termInfo}`;
+            displayElement.textContent = `${lunarDate.display}${termInfo}`;
         }
 
         console.log('=== updateGanzhiDisplay 结束 ===');
@@ -1209,6 +1267,7 @@ class FoodRecommendationApp {
 
     // 生成饮食推荐
     async generateRecommendation() {
+        const generationStartTime = Date.now();
         console.log('=== 开始生成推荐 ===');
         console.log('当前时间:', new Date().toLocaleString());
 
@@ -1221,7 +1280,7 @@ class FoodRecommendationApp {
 
         // 立即禁用按钮并显示加载状态
         generateBtn.disabled = true;
-        generateBtn.innerHTML = '⏳ 正在生成...';
+        generateBtn.innerHTML = `⏳ ${i18n.t('button.generating')}`;
         generateBtn.style.opacity = '0.7';
 
         // 显示结果区域(添加安全检查)
@@ -1235,14 +1294,14 @@ class FoodRecommendationApp {
         loadingSpinner.style.display = 'block';
         loadingSpinner.innerHTML = `
             <div class="spinner"></div>
-            <p class="loading-text">🤖 正在生成推荐...</p>
+            <p class="loading-text">🤖 ${i18n.t('loading.generating')}</p>
             <div class="loading-steps">
-                <div class="step active" id="step1">✓ 收集信息</div>
-                <div class="step" id="step2">○ 分析节气</div>
-                <div class="step" id="step3">○ AI生成推荐</div>
-                <div class="step" id="step4">○ 整理结果</div>
+                <div class="step active" id="step1">✓ ${i18n.t('loading.step1')}</div>
+                <div class="step" id="step2">○ ${i18n.t('loading.step2')}</div>
+                <div class="step" id="step3">○ ${i18n.t('loading.step3')}</div>
+                <div class="step" id="step4">○ ${i18n.t('loading.step4')}</div>
             </div>
-            <p class="loading-hint">⏰ 预计需要5-15秒</p>
+            <p class="loading-hint">⏰ ${i18n.t('loading.estimated_time')}</p>
         `;
         recommendationContent.innerHTML = '';
         document.getElementById('nutritionCard').style.display = 'none';
@@ -1252,6 +1311,8 @@ class FoodRecommendationApp {
         const timeInput = document.getElementById('timeInput').value;
         const mealPeriod = document.querySelector('input[name="mealPeriod"]:checked').value;
         const dietType = document.querySelector('input[name="dietType"]:checked').value;
+        const healthGoal = document.querySelector('input[name="healthGoal"]:checked').value;
+        const location = document.getElementById('locationSelect').value;
         const weather = document.getElementById('weatherSelect').value;
 
         console.log('✓ 用户输入获取成功');
@@ -1259,6 +1320,8 @@ class FoodRecommendationApp {
         console.log('  - 时间:', timeInput);
         console.log('  - 餐次:', mealPeriod);
         console.log('  - 饮食类型:', dietType);
+        console.log('  - 健康目标:', healthGoal);
+        console.log('  - 地域:', location);
         console.log('  - 天气:', weather);
 
         // 更新步骤1完成
@@ -1267,16 +1330,33 @@ class FoodRecommendationApp {
         // 解析日期
         console.log('开始计算节气和季节...');
         const date = new Date(dateInput);
-        const solarTerm = this.chineseCalendar.getCurrentSolarTerm(date);
+
+        // 使用getSolarTermDayRelation获取节气信息（和前端显示完全一致）
+        const termRelation = this.getSolarTermDayRelation(date);
+
+        // 构建节气描述：直接使用前端显示的完整描述，如"前日小寒"
+        let solarTermDesc = '立春'; // 默认值
+        if (termRelation) {
+            // 根据关系构建描述
+            const relationMap = {
+                'today': '今日',
+                'yesterday': '昨日',
+                'dayBeforeYesterday': '前日',
+                'tomorrow': '明日',
+                'dayAfterTomorrow': '后日'
+            };
+            solarTermDesc = `${relationMap[termRelation.relation]}${termRelation.name}`;
+            console.log('  - 节气描述:', solarTermDesc);
+        } else {
+            console.log('  - 未找到节气信息，使用默认值');
+        }
+
         const season = this.getSeason(date);
 
         console.log('✓ 节气计算完成');
-        console.log('  - 节气:', solarTerm ? solarTerm.name : '未找到');
+        console.log('  - 日期:', dateInput);
+        console.log('  - 节气描述:', solarTermDesc);
         console.log('  - 季节:', this.getSeasonName(season));
-
-        if (!solarTerm) {
-            console.warn('⚠️ 警告: 未能识别节气，将使用默认值');
-        }
 
         // 更新步骤2完成
         this.updateLoadingStep(3);
@@ -1288,8 +1368,10 @@ class FoodRecommendationApp {
                 time: timeInput,
                 mealPeriod: mealPeriod,
                 dietType: dietType,
+                healthGoal: healthGoal,
+                location: location,
                 weather: weather,
-                solarTerm: solarTerm ? solarTerm.name : '立春',
+                solarTerm: solarTermDesc,
                 season: this.getSeasonName(season)
             };
             console.log('API参数:', apiParams);
@@ -1312,18 +1394,24 @@ class FoodRecommendationApp {
 
             // 恢复按钮状态
             generateBtn.disabled = false;
-            generateBtn.innerHTML = '🍲 生成推荐';
+            generateBtn.innerHTML = `🍲 ${i18n.t('button.generating_short')}`;
             generateBtn.style.opacity = '1';
 
             console.log('✓ 推荐生成完成');
-            generateBtn.innerHTML = '🌟 饮食推荐';
+            generateBtn.innerHTML = i18n.t('button.generate');
             generateBtn.style.opacity = '1';
 
             // 显示推荐结果
             console.log('调用displayRecommendation渲染结果...');
             this.displayRecommendation(recommendation);
 
+            // 缓存推荐结果
+            this.cachedRecommendation = recommendation;
+            console.log('✓ 推荐结果已缓存');
+
+            const totalGenerationTime = Date.now() - generationStartTime;
             console.log('=== 推荐生成流程完成 ===');
+            console.log(`⏱️ 总耗时: ${totalGenerationTime}ms (${(totalGenerationTime/1000).toFixed(2)}秒)`);
 
         } catch (error) {
             console.error('❌ 生成推荐失败');
@@ -1336,14 +1424,14 @@ class FoodRecommendationApp {
 
             // 恢复按钮状态
             generateBtn.disabled = false;
-            generateBtn.innerHTML = '🌟 饮食推荐';
+            generateBtn.innerHTML = i18n.t('button.generate');
             generateBtn.style.opacity = '1';
 
             recommendationContent.innerHTML = `
                 <div class="error-message">
-                    <h3>❌ 生成失败</h3>
-                    <p><strong>错误信息:</strong> ${error.message}</p>
-                    <p class="error-hint">💡 提示: 请检查网络连接和API Key配置，查看浏览器控制台获取详细日志</p>
+                    <h3>❌ ${i18n.t('error.title')}</h3>
+                    <p><strong>${i18n.t('error.message')}:</strong> ${error.message}</p>
+                    <p class="error-hint">💡 ${i18n.t('error.hint')}</p>
                 </div>
             `;
 
@@ -1369,9 +1457,9 @@ class FoodRecommendationApp {
         });
     }
 
-    // 带自动降级的API调用（优先使用高质量模型）
+    // 带自动降级的API调用（优先使用GLM-4.7）
     async callGLMAPIWithFallback(params) {
-        // 根据测试结果，GLM-4.7速度最快且质量最高
+        // 优先使用GLM-4.7（最高质量），然后依次降级
         const models = ['glm-4.7', 'glm-4.6', 'glm-4-flash'];
 
         for (let i = 0; i < models.length; i++) {
@@ -1381,7 +1469,7 @@ class FoodRecommendationApp {
             // 更新加载提示
             const loadingText = document.querySelector('.loading-text');
             if (loadingText) {
-                loadingText.textContent = `🤖 使用模型 ${model} 生成推荐...`;
+                loadingText.textContent = `🤖 ${i18n.t('loading.using_model')} ${model}...`;
             }
 
             try {
@@ -1400,24 +1488,13 @@ class FoodRecommendationApp {
         }
     }
 
-    // 调用GLM API
+    // 调用GLM API - 直接使用fetch调用智谱AI（Anthropic兼容格式）
     async callGLMAPI(params) {
         console.log('========== callGLMAPI开始 ==========');
         console.log('参数:', JSON.stringify(params, null, 2));
 
-        // 从系统变量获取API Key
-        console.log('正在获取API Key...');
-        const apiKey = await this.getApiKey();
-
-        if (!apiKey) {
-            console.error('❌ API Key获取失败');
-            throw new Error('未找到API Key，请设置系统变量 ZHIPU_API_KEY');
-        }
-
-        console.log('✓ API Key获取成功，长度:', apiKey.length, '字符');
-
         // 获取模型
-        const model = params.model || 'glm-4-flash';
+        const model = params.model || 'glm-4.7';
         console.log('使用模型:', model);
 
         // 构建提示词
@@ -1427,13 +1504,23 @@ class FoodRecommendationApp {
         console.log('Prompt前200字符:', prompt.substring(0, 200));
 
         try {
-            console.log(`正在发送API请求到 ${model}...`);
+            console.log(`正在调用智谱AI GLM API (${model})...`);
+            console.log('✓ 使用Anthropic兼容API格式');
             const requestStartTime = Date.now();
+
+            // 获取API Key
+            const apiKey = await this.getApiKey();
+            if (!apiKey) {
+                throw new Error('未找到API Key，请设置ZHIPU_API_KEY环境变量');
+            }
+
+            console.log('✓ API Key已获取，长度:', apiKey.length);
 
             // 创建超时控制器
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 120000); // 120秒超时
 
+            // 直接调用智谱AI API（Anthropic兼容格式）
             const response = await fetch('https://open.bigmodel.cn/api/anthropic/v1/messages', {
                 method: 'POST',
                 headers: {
@@ -1448,8 +1535,8 @@ class FoodRecommendationApp {
                             content: prompt
                         }
                     ],
-                    temperature: 0.7,
-                    max_tokens: 4096
+                    max_tokens: 4096,
+                    temperature: 0.7
                 }),
                 signal: controller.signal
             });
@@ -1469,22 +1556,14 @@ class FoodRecommendationApp {
             console.log('正在解析响应JSON...');
             const data = await response.json();
             console.log('✓ 响应JSON解析成功');
-            console.log('响应结构:', {
-                id: data.id,
-                type: data.type,
-                role: data.role,
-                content_exists: !!data.content,
-                content_length: data.content ? data.content.length : 0
-            });
 
             // Anthropic格式: data.content[0].text
-            // OpenAI格式: data.choices[0].message.content
-            const content = data.content?.[0]?.text || data.choices?.[0]?.message?.content || '';
+            const content = data.content?.[0]?.text || '';
 
             if (!content || content.trim().length === 0) {
                 console.error('❌ API返回空内容!');
                 console.error('完整响应:', JSON.stringify(data, null, 2));
-                throw new Error('GLM模型返回空内容,请尝试使用glm-4-flash或glm-4.6');
+                throw new Error('GLM模型返回空内容');
             }
 
             console.log('✓ 获取返回内容，长度:', content.length, '字符');
@@ -1508,26 +1587,39 @@ class FoodRecommendationApp {
         }
     }
 
-    // 获取API Key（优先从环境变量）
+    // 获取API Key（优先从环境变量，带超时控制）
     async getApiKey() {
-        // 优先从后端API获取环境变量中的API Key
+        // 优先从后端API获取环境变量中的API Key（2秒超时）
         try {
-            const response = await fetch('/api/env-api-key');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2秒超时
+
+            const response = await fetch('/api/env-api-key', {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
             if (response.ok) {
                 const data = await response.json();
                 if (data.apiKey) {
-                    console.log('✅ 从环境变量成功读取API Key');
+                    const maskedKey = data.apiKey.substring(0, 10) + '...' + data.apiKey.substring(data.apiKey.length - 4);
+                    console.log('✅ 从环境变量成功读取API Key:', maskedKey);
                     return data.apiKey;
                 }
             }
         } catch (error) {
-            console.log('ℹ️ 后端API不可用，尝试其他方式');
+            if (error.name === 'AbortError') {
+                console.log('⏱️ 后端API响应超时(>2秒)，跳过环境变量读取');
+            } else {
+                console.log('ℹ️ 后端API不可用，尝试其他方式');
+            }
         }
 
         // 如果后端不可用，尝试从localStorage获取（之前保存的）
-        let apiKey = localStorage.getItem('ZHIPU_API_KEY');
+        let apiKey = localStorage.getItem('zhipu_api_key') || localStorage.getItem('ZHIPU_API_KEY');
         if (apiKey) {
-            console.log('✅ 从localStorage读取API Key');
+            const maskedKey = apiKey.substring(0, 10) + '...' + apiKey.substring(apiKey.length - 4);
+            console.log('✅ 从localStorage读取API Key:', maskedKey);
             return apiKey;
         }
 
@@ -1580,10 +1672,18 @@ class FoodRecommendationApp {
 
     // 构建提示词（从prompts文件夹读取）
     async buildPrompt(params) {
+        const startTime = Date.now();
+        console.log('=== buildPrompt 开始 ===');
+        console.log('参数:', JSON.stringify(params, null, 2));
+
         try {
             // 从prompts文件夹读取提示词模板（根据dietType选择）
             const promptTemplate = await this.fetchPromptTemplate(params.dietType);
-            const { date, time, mealPeriod, dietType, weather, solarTerm, season } = params;
+            const { date, time, mealPeriod, dietType, healthGoal, location, weather, solarTerm, season } = params;
+
+            // 获取当前语言
+            const currentLang = i18n.currentLang;
+            console.log('当前语言:', currentLang);
 
             // 替换模板中的占位符
             let prompt = promptTemplate
@@ -1591,43 +1691,71 @@ class FoodRecommendationApp {
                 .replace(/{time}/g, time)
                 .replace(/{mealPeriod}/g, mealPeriod)
                 .replace(/{dietType}/g, dietType)
+                .replace(/{healthGoal}/g, healthGoal)
+                .replace(/{location}/g, location)
                 .replace(/{weather}/g, weather)
                 .replace(/{solarTerm}/g, solarTerm)
-                .replace(/{season}/g, season);
+                .replace(/{season}/g, season)
+                .replace(/{language}/g, currentLang === 'en' ? '英语' : '中文');
 
+            const buildTime = Date.now() - startTime;
+            console.log(`✓ 提示词构建完成 (${buildTime}ms)`);
+            console.log(`  - 最终长度: ${prompt.length} 字符`);
+            console.log(`  - 语言: ${currentLang}`);
+            console.log('=== buildPrompt 结束 ===');
             return prompt;
         } catch (error) {
-            console.error('构建提示词失败:', error);
+            console.error('❌ 构建提示词失败:', error);
+            console.error('错误堆栈:', error.stack);
             // 如果读取失败，返回简化版提示词
             return this.buildFallbackPrompt(params);
         }
     }
 
-    // 从文件读取提示词模板（根据饮食类型选择）
+    // 从文件读取提示词模板（根据饮食类型选择）- 带缓存
     async fetchPromptTemplate(dietType) {
         try {
+            const cacheKey = dietType || 'default';
+
+            // 检查缓存
+            if (this.promptCache[cacheKey]) {
+                console.log(`✓ 从缓存读取提示词模板: ${cacheKey}`);
+                return this.promptCache[cacheKey];
+            }
+
+            console.log(`⏳ 首次加载提示词模板: ${cacheKey}`);
+
             // 根据饮食类型选择不同的提示词文件
             let promptFile = 'prompts/food_recommendation_prompt.txt';
             if (dietType === '茶饮推荐') {
                 promptFile = 'prompts/tea_recommendation_prompt.txt';
             }
 
+            const startTime = Date.now();
             const response = await fetch(promptFile);
+            const loadTime = Date.now() - startTime;
+
             if (!response.ok) {
-                throw new Error('读取提示词文件失败');
+                throw new Error(`读取提示词文件失败: ${response.status}`);
             }
-            return await response.text();
+
+            const template = await response.text();
+            console.log(`✓ 提示词文件加载成功 (${loadTime}ms), 长度: ${template.length} 字符`);
+
+            // 缓存模板
+            this.promptCache[cacheKey] = template;
+            return template;
         } catch (error) {
-            console.error('读取提示词模板失败，使用默认提示词:', error);
+            console.error('❌ 读取提示词模板失败:', error);
             throw error;
         }
     }
 
     // 备用简化提示词
     buildFallbackPrompt(params) {
-        const { date, time, mealPeriod, dietType, weather, solarTerm, season } = params;
+        const { date, time, mealPeriod, dietType, healthGoal, location, weather, solarTerm, season } = params;
         return `请根据以下信息推荐${mealPeriod}的饮食方案：
-日期:${date}, 时间:${time}, 饮食类型:${dietType}, 天气:${weather}, 节气:${solarTerm}, 季节:${season}
+日期:${date}, 时间:${time}, 饮食类型:${dietType}, 健康目标:${healthGoal}, 地域:${location}, 天气:${weather}, 节气:${solarTerm}, 季节:${season}
 请严格按照JSON格式输出，包含菜品、营养分析和建议。`;
     }
 
@@ -1767,14 +1895,41 @@ class FoodRecommendationApp {
 
     // 显示推荐结果
     displayRecommendation(recommendation) {
+        console.log('=== displayRecommendation 开始 ===');
+        console.log('推荐数据:', {
+            hasItems: !!recommendation.items,
+            hasDishes: !!recommendation.dishes,
+            hasTeas: !!recommendation.teas,
+            itemsLength: recommendation.items?.length || 0,
+            firstItem: recommendation.items?.[0]
+        });
+
         const recommendationContent = document.getElementById('recommendationContent');
         const dietType = document.querySelector('input[name="dietType"]:checked').value;
+
+        console.log('当前饮食类型:', dietType);
+
+        // 动态更新标题
+        const titleElement = document.querySelector('[data-i18n="dish.title"]');
+        if (titleElement) {
+            if (dietType === '茶饮推荐') {
+                titleElement.innerHTML = `<span class="section-icon">🍵</span><span data-i18n="dish.title">${i18n.t('dish.tea')}</span>`;
+            } else {
+                titleElement.innerHTML = `<span class="section-icon">🍲</span><span data-i18n="dish.title">${i18n.t('dish.title')}</span>`;
+            }
+        }
+
+        // 开始构建HTML
+        let html = '';
 
         // 判断是茶饮推荐还是食物推荐（使用标准化后的items字段）
         const isTeaRecommendation = dietType === '茶饮推荐' && recommendation.items && recommendation.items.length > 0;
         const isTeaData = recommendation.teas && recommendation.teas.length > 0;
 
+        console.log('判断结果:', { isTeaRecommendation, isTeaData });
+
         if (isTeaRecommendation || isTeaData) {
+            console.log('显示茶饮推荐');
             this.displayTeaRecommendation(recommendation);
             return;
         }
@@ -1794,63 +1949,51 @@ class FoodRecommendationApp {
             });
 
             sortedDishes.forEach((dish, index) => {
-                // 获取菜品类型(不使用emoji和标签)
-                const typeInfo = {
-                    '汤品': { emoji: '', name: '', label: '' },
-                    '主食': { emoji: '', name: '', label: '' },
-                    '热菜': { emoji: '', name: '', label: '' },
-                    '凉菜': { emoji: '', name: '', label: '' },
-                    '甜品': { emoji: '', name: '', label: '' },
-                    '药膳': { emoji: '', name: '', label: '' }
-                };
-                const typeData = typeInfo[dish.type] || { emoji: '', name: '', label: '' };
+                // 直接使用AI返回的type字段,不做任何猜测
+                let typeLabel = '';
+                const dishType = dish.type || '';
 
-                // 简化食材显示 - 包含克数
-                let ingredientsText = '';
+                // 标准化type字段
+                const normalizedType = dishType.trim();
+
+                // 直接显示AI返回的类型
+                if (normalizedType) {
+                    typeLabel = `<span class="dish-type-label">(${normalizedType})</span>`;
+                }
+
+                // 配比和做法合在一起
+                let ingredientsAndRecipe = '';
+
+                // 先显示配比
                 if (Array.isArray(dish.ingredients)) {
                     if (typeof dish.ingredients[0] === 'object') {
-                        ingredientsText = dish.ingredients.map(ing => `${ing.item}${ing.amount ? ing.amount + '克' : ''}`).join('、');
+                        const ingredientsList = dish.ingredients.map(ing => `${ing.item}${ing.amount ? ing.amount + '克' : ''}`).join('、');
+                        ingredientsAndRecipe = `${ingredientsList}，`;
                     } else {
-                        ingredientsText = dish.ingredients.join('、');
+                        ingredientsAndRecipe = `${dish.ingredients.join('、')}，`;
                     }
                 }
 
-                // 简化营养信息 - 使用雅致表述
-                let nutritionBadge = '';
-                if (typeof dish.nutrition === 'object') {
-                    nutritionBadge = `<span class="dish-calories-badge"><span class="fire-icon">🔥</span>${dish.nutrition.calories}大卡</span>`;
+                // 再显示做法
+                if (Array.isArray(dish.recipe) && dish.recipe.length > 0) {
+                    ingredientsAndRecipe += dish.recipe.join('，');
+                } else if (typeof dish.recipe === 'string') {
+                    ingredientsAndRecipe += dish.recipe;
                 }
 
-                // 生成菜品类型对应的渐变背景色
-                const gradientColors = this.getTypeGradient(dish.type);
+                // 功效
+                let effectText = '';
+                if (dish.nutrition && dish.nutrition.description) {
+                    effectText = dish.nutrition.description;
+                } else if (dish.cookingTips) {
+                    effectText = dish.cookingTips;
+                }
 
                 dishesHtml += `
-                    <div class="dish-card">
-                        <div class="dish-header">
-                            <span class="dish-emoji">${typeData.emoji}</span>
-                            <div class="dish-title-group">
-                                <h3 class="dish-name">${dish.name}</h3>
-                                ${nutritionBadge ? `
-                                <span class="dish-calories-badge">${nutritionBadge}</span>
-                                ` : ''}
-                            </div>
-                        </div>
-
-                        <div class="dish-ingredients">
-                            <p class="label">🥘 食材</p>
-                            <p class="value">${ingredientsText}</p>
-                        </div>
-
-                        <div class="dish-recipe-section">
-                            <button class="recipe-toggle-btn" onclick="app.toggleRecipe(${index})">
-                                📜 查看制法
-                            </button>
-                            <div class="recipe-content" id="recipe-${index}" style="display: none;">
-                                ${Array.isArray(dish.recipe) ? dish.recipe.map((step, i) =>
-                                    `<p class="recipe-step-inline">${i + 1}. ${step}</p>`
-                                ).join('') : ''}
-                            </div>
-                        </div>
+                    <div class="dish-item">
+                        <div class="dish-name">${index + 1}. ${dish.name} ${typeLabel}</div>
+                        <div class="dish-ingredients">${ingredientsAndRecipe}</div>
+                        ${effectText ? `<div class="dish-effect">${i18n.t('dish.effect')}: ${effectText}</div>` : ''}
                     </div>
                 `;
             });
@@ -1858,13 +2001,24 @@ class FoodRecommendationApp {
 
         dishesHtml += '</div>';
 
-        recommendationContent.innerHTML = dishesHtml;
+        html += dishesHtml;
+
+        // 显示整体建议（如果存在）- 放在菜品后面
+        if (recommendation.overallAdvice) {
+            html += `
+                <div class="overall-advice-card">
+                    <h3 class="advice-title">💡 综合建议</h3>
+                    <div class="advice-content">${recommendation.overallAdvice}</div>
+                </div>
+            `;
+        }
+
+        recommendationContent.innerHTML = html;
 
         // 显示营养分析
         this.displayNutritionChart(recommendation.totalNutrition);
 
-        // 显示推荐理由
-        this.displayReasoning(recommendation);
+        // 不显示推荐理由
     }
 
     // 显示推荐理由
@@ -2051,6 +2205,7 @@ class FoodRecommendationApp {
                     '乌龙': { emoji: '🌿', name: '乌龙' },
                     '普洱': { emoji: '🍵', name: '普洱' },
                     '花茶': { emoji: '🌸', name: '花茶' },
+                    '果茶': { emoji: '🍎', name: '果茶' },
                     '草本茶': { emoji: '🌱', name: '草本' }
                 };
                 const teaType = teaTypes[tea.type] || { emoji: '🍵', name: '茶饮' };
@@ -2075,7 +2230,7 @@ class FoodRecommendationApp {
                         </div>
 
                         <div class="dish-ingredients">
-                            <p class="label">🌿 配料</p>
+                            <p class="label">${i18n.t('label.ingredients')}</p>
                             <p class="value">${ingredientsText}</p>
                         </div>
 

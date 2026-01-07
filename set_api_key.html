@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置API Key</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .success {
+            background: #4caf50;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        .error {
+            background: #f44336;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+        .info code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 设置API Key</h1>
+
+        <div class="info">
+            <strong>说明:</strong> 此页面将API Key保存到浏览器的localStorage中。<br><br>
+            格式要求: <code>id.secret</code> 例如: <code>1234567890.abcdefghijklmnopqrst</code>
+        </div>
+
+        <div class="input-group">
+            <label for="apiKey">智谱AI API Key:</label>
+            <input type="password" id="apiKey" placeholder="请输入API Key (格式: id.secret)">
+        </div>
+
+        <button onclick="saveApiKey()">保存API Key</button>
+        <button onclick="checkApiKey()">检查当前API Key</button>
+        <button onclick="clearApiKey()" style="background: #f44336;">清除API Key</button>
+
+        <div id="success" class="success"></div>
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'zhipu_api_key';
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const successDiv = document.getElementById('success');
+            const errorDiv = document.getElementById('error');
+
+            // 验证格式
+            if (!apiKey) {
+                showError('请输入API Key');
+                return;
+            }
+
+            if (!apiKey.includes('.')) {
+                showError('API Key格式错误! 应该是 id.secret 格式');
+                return;
+            }
+
+            if (apiKey.length < 10) {
+                showError('API Key长度不够!');
+                return;
+            }
+
+            // 保存到localStorage
+            localStorage.setItem(STORAGE_KEY, apiKey);
+            localStorage.setItem('ZHIPU_API_KEY', apiKey); // 同时保存两个key
+
+            const maskedKey = apiKey.substring(0, 10) + '...' + apiKey.substring(apiKey.length - 4);
+
+            successDiv.textContent = `✅ 成功! API Key已保存: ${maskedKey}`;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+
+            console.log('API Key已保存到localStorage');
+            console.log('Key:', maskedKey);
+
+            // 3秒后自动跳转到主应用
+            setTimeout(() => {
+                window.location.href = '/index.html';
+            }, 2000);
+        }
+
+        function checkApiKey() {
+            const apiKey = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('ZHIPU_API_KEY');
+            const successDiv = document.getElementById('success');
+            const errorDiv = document.getElementById('error');
+
+            if (apiKey) {
+                const maskedKey = apiKey.substring(0, 10) + '...' + apiKey.substring(apiKey.length - 4);
+                successDiv.textContent = `✅ 找到API Key: ${maskedKey}`;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+                console.log('当前API Key:', maskedKey);
+            } else {
+                showError('未找到API Key');
+            }
+        }
+
+        function clearApiKey() {
+            if (confirm('确定要清除API Key吗?')) {
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem('ZHIPU_API_KEY');
+                showError('API Key已清除');
+                document.getElementById('success').style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            const successDiv = document.getElementById('success');
+            const errorDiv = document.getElementById('error');
+
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+        }
+
+        // 页面加载时检查是否有已保存的API Key
+        window.onload = function() {
+            const apiKey = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('ZHIPU_API_KEY');
+            if (apiKey) {
+                const maskedKey = apiKey.substring(0, 10) + '...' + apiKey.substring(apiKey.length - 4);
+                document.getElementById('apiKey').value = apiKey;
+                document.querySelector('.info').innerHTML += `<br><br>💾 已保存的API Key: <code>${maskedKey}</code>`;
+            }
+        };
+    </script>
+</body>
+</html>

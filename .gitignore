@@ -39,3 +39,13 @@ Thumbs.db
 dist/
 build/
 *.spec
+
+# 环境变量和API密钥 (CRITICAL: Never commit these!)
+.env
+.env.local
+.env.*.local
+*.key
+ZHIPU_API_KEY
+API_KEY
+api_key.txt
+secrets/

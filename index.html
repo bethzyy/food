@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>养生饮食推荐</title>
+    <title data-i18n="page.title">养生饮食推荐</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container" id="app">
         <!-- 头部标题区 -->
         <header class="app-header">
-            <h1>时令膳食</h1>
-            <p class="subtitle">顺应四时 调和阴阳</p>
+            <h1 data-i18n="app.title">时令养生膳食</h1>
+            <p class="subtitle" data-i18n="app.subtitle">顺应四时 调和阴阳</p>
             <button id="langToggleBtn" class="lang-icon-btn" title="切换语言/Switch Language">
                 <span class="lang-icon">🌐</span>
             </button>
@@ -21,16 +21,14 @@
         <main class="main-content">
             <!-- 环境信息综合区 -->
             <section class="section environment-section">
-                <h2 class="section-title" data-i18n="section.environment">🌸 天时地利</h2>
+                <h2 class="section-title">
+                    <span class="section-icon">🏛️</span>
+                    <span data-i18n="section.environment">天时地利</span>
+                    <!-- 农历节气显示靠右 -->
+                    <span class="lunar-term-display" id="ganzhiDisplay"></span>
+                </h2>
 
-                <!-- 天干地支和节气显示 -->
-                <div class="ganzgi-solar-term-row">
-                    <div class="ganzhi-display" id="ganzhiDisplay">
-                        正在计算天干地支、节气和农历...
-                    </div>
-                </div>
-
-                <!-- 日期时间位置天气综合行 -->
+                <!-- 日期时间位置天气第一行 -->
                 <div class="compact-info-row">
                     <div class="compact-item">
                         <label data-i18n="label.date">公历</label>
@@ -78,7 +76,7 @@
                         </select>
                     </div>
                     <div class="compact-item">
-                        <label>天候</label>
+                        <label data-i18n="label.weather">天候</label>
                         <select id="weatherSelect" class="compact-select">
                             <option value="晴">晴</option>
                             <option value="多云">多云</option>
@@ -91,12 +89,9 @@
                         </select>
                     </div>
                 </div>
-            </section>
 
-            <!-- 饮食类型选择区 -->
-            <section class="section meal-type-section">
-                <h2 class="section-title" data-i18n="section.meal">🍽️ 用膳之时</h2>
-                <div class="meal-period">
+                <!-- 用膳时段第二行 -->
+                <div class="meal-period-row">
                     <label class="radio-label">
                         <input type="radio" name="mealPeriod" value="早餐" data-i18n-value="meal.breakfast" checked>
                         <span class="radio-text" data-i18n="meal.breakfast">🌅 晨起</span>
@@ -110,6 +105,14 @@
                         <span class="radio-text" data-i18n="meal.dinner">🌙 日暮</span>
                     </label>
                 </div>
+            </section>
+
+            <!-- 因人制宜选择区 -->
+            <section class="section meal-type-section">
+                <h2 class="section-title">
+                    <span class="section-icon">🥢</span>
+                    <span data-i18n="section.personalization">因人制宜</span>
+                </h2>
                 <div class="diet-type">
                     <label class="radio-label">
                         <input type="radio" name="dietType" value="日常饮食" data-i18n-value="diet.regular" checked>
@@ -124,6 +127,28 @@
                         <span class="radio-text" data-i18n="diet.tea">🍵 茶饮养生</span>
                     </label>
                 </div>
+                <div class="health-goal">
+                    <label class="radio-label">
+                        <input type="radio" name="healthGoal" value="健脾" data-i18n-value="goal.spleen" checked>
+                        <span class="radio-text" data-i18n="goal.spleen">🫐 健脾</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="healthGoal" value="安神" data-i18n-value="goal.calming">
+                        <span class="radio-text" data-i18n="goal.calming">😴 安神</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="healthGoal" value="清火" data-i18n-value="goal.fire">
+                        <span class="radio-text" data-i18n="goal.fire">🔥 清火</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="healthGoal" value="祛湿" data-i18n-value="goal.dampness">
+                        <span class="radio-text" data-i18n="goal.dampness">💧 祛湿</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="healthGoal" value="美白" data-i18n-value="goal.whitening">
+                        <span class="radio-text" data-i18n="goal.whitening">✨ 美白</span>
+                    </label>
+                </div>
             </section>
 
             <!-- 生成推荐按钮 -->
@@ -133,11 +158,13 @@
 
             <!-- 推荐结果展示区 -->
             <section class="section result-section" id="resultSection" style="display: none;">
-                <h2 class="section-title" data-i18n="section.result">📜 养生良方</h2>
 
                 <!-- 饮食建议 -->
                 <div class="info-card recommendation-card">
-                    <h3 class="card-title" data-i18n="dish.title">🍲 时令佳肴</h3>
+                    <h3 class="card-title">
+                        <span class="section-icon">🍲</span>
+                        <span data-i18n="dish.title">时令佳肴</span>
+                    </h3>
                     <div class="card-content" id="recommendationContent">
                         <div class="loading" id="loadingSpinner">
                             <div class="spinner"></div>
@@ -148,45 +175,42 @@
 
                 <!-- 营养分析 -->
                 <div class="info-card nutrition-card" id="nutritionCard" style="display: none;">
-                    <h3 class="card-title">📊 营养概览</h3>
+                    <h3 class="card-title">
+                        <span class="section-icon">📊</span>
+                        <span data-i18n="nutrition.title">营养概览</span>
+                    </h3>
                     <div class="card-content" id="nutritionContent"></div>
                     <div class="nutrition-chart">
                         <canvas id="nutritionChart"></canvas>
                     </div>
-                </div>
-
-                <!-- 推荐理由 -->
-                <div class="info-card reasoning-card" id="reasoningCard" style="display: none;">
-                    <h3 class="card-title">💡 推荐理由</h3>
-                    <div class="card-content" id="reasoningContent"></div>
                 </div>
             </section>
         </main>
 
         <!-- 页脚 -->
         <footer class="app-footer">
-            <p>秉承中医养生之道</p>
-            <p class="footer-note">由智能大模型出品</p>
+            <p data-i18n="footer.motto">秉承中医养生之道</p>
+            <p class="footer-note" data-i18n="footer.ai">由智能大模型出品</p>
         </footer>
     </div>
 
     <!-- API Key输入模态框 -->
     <div id="apiKeyModal" class="modal" style="display: none;">
         <div class="modal-content">
-            <h2>🔑 配置API Key</h2>
-            <p>请输入您的智谱AI API Key以继续使用</p>
+            <h2 data-i18n="modal.apikey.title">🔑 配置API Key</h2>
+            <p data-i18n="modal.apikey.description">请输入您的智谱AI API Key以继续使用</p>
             <div class="input-group">
-                <input type="password" id="apiKeyInput" placeholder="请输入API Key (格式: id.secret)">
-                <button id="saveApiKeyBtn" class="primary-btn">保存</button>
+                <input type="password" id="apiKeyInput" data-i18n-placeholder="modal.apikey.placeholder" placeholder="请输入API Key (格式: id.secret)">
+                <button id="saveApiKeyBtn" class="primary-btn" data-i18n="button.save">保存</button>
             </div>
             <div class="api-key-help">
-                <p>📖 如何获取API Key:</p>
+                <p data-i18n="modal.apikey.help_title">📖 如何获取API Key:</p>
                 <ol>
-                    <li>访问 <a href="https://open.bigmodel.cn/" target="_blank">https://open.bigmodel.cn/</a></li>
-                    <li>注册并登录账号</li>
-                    <li>在控制台获取API Key</li>
+                    <li data-i18n="modal.apikey.help_step1">访问 <a href="https://open.bigmodel.cn/" target="_blank">https://open.bigmodel.cn/</a></li>
+                    <li data-i18n="modal.apikey.help_step2">注册并登录账号</li>
+                    <li data-i18n="modal.apikey.help_step3">在控制台获取API Key</li>
                 </ol>
-                <p class="note">💾 API Key将保存在浏览器本地,下次无需再次输入</p>
+                <p class="note" data-i18n="modal.apikey.help_note">💾 API Key将保存在浏览器本地,下次无需再次输入</p>
             </div>
         </div>
     </div>

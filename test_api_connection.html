@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>API连接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #42a5f5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .error {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        .info {
+            background: #bbdefb;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 API连接诊断工具</h1>
+
+    <div class="test-section">
+        <h3>1. 检查环境变量API Key</h3>
+        <button onclick="testEnvAPIKey()">测试环境变量API Key</button>
+        <div id="envResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. 检查localStorage API Key</h3>
+        <button onclick="testLocalStorageAPIKey()">测试本地存储API Key</button>
+        <div id="localResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. 测试智谱AI API连接 (GLM-4-flash)</h3>
+        <button onclick="testGLMAPI()">测试API调用</button>
+        <div id="apiResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. 网络连接测试</h3>
+        <button onclick="testNetworkConnectivity()">测试网络连接</button>
+        <div id="networkResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>5. 浏览器信息</h3>
+        <button onclick="showBrowserInfo()">显示浏览器信息</button>
+        <div id="browserResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_ENDPOINT = 'https://open.bigmodel.cn/api/anthropic/v1/messages';
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = message;
+            console.log(`[${elementId}]`, message);
+        }
+
+        async function testEnvAPIKey() {
+            log('envResult', '正在测试环境变量API Key...', 'info');
+
+            try {
+                const response = await fetch('/api/env-api-key');
+                const data = await response.json();
+
+                if (data.apiKey) {
+                    const maskedKey = data.apiKey.substring(0, 10) + '...' + data.apiKey.substring(data.apiKey.length - 4);
+                    log('envResult', `✅ 成功! 环境变量API Key: ${maskedKey}\n格式正确: ${data.apiKey.includes('.')}`, 'success');
+                } else {
+                    log('envResult', `❌ 失败! ${data.error || '未找到API Key'}`, 'error');
+                }
+            } catch (error) {
+                log('envResult', `❌ 错误: ${error.message}\n请确保使用 server_with_env.py 启动服务器`, 'error');
+            }
+        }
+
+        function testLocalStorageAPIKey() {
+            log('localResult', '正在检查localStorage...', 'info');
+
+            const apiKey = localStorage.getItem('zhipu_api_key');
+
+            if (apiKey) {
+                const maskedKey = apiKey.substring(0, 10) + '...' + apiKey.substring(apiKey.length - 4);
+                log('localResult', `✅ 找到本地存储API Key: ${maskedKey}\n格式正确: ${apiKey.includes('.')}`, 'success');
+            } else {
+                log('localResult', `❌ localStorage中未找到API Key\n请通过应用界面输入API Key`, 'error');
+            }
+        }
+
+        async function testGLMAPI() {
+            log('apiResult', '正在测试智谱AI API连接...\n(这可能需要几秒钟)', 'info');
+
+            let apiKey = null;
+
+            // 先尝试环境变量
+            try {
+                const response = await fetch('/api/env-api-key');
+                const data = await response.json();
+                if (data.apiKey) {
+                    apiKey = data.apiKey;
+                    console.log('使用环境变量API Key');
+                }
+            } catch (error) {
+                console.log('无法获取环境变量API Key');
+            }
+
+            // 如果环境变量没有,尝试localStorage
+            if (!apiKey) {
+                apiKey = localStorage.getItem('zhipu_api_key');
+                if (apiKey) {
+                    console.log('使用localStorage API Key');
+                }
+            }
+
+            if (!apiKey) {
+                log('apiResult', '❌ 未找到API Key!\n请先配置环境变量或通过界面输入', 'error');
+                return;
+            }
+
+            try {
+                const startTime = Date.now();
+
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey
+                    },
+                    body: JSON.stringify({
+                        model: 'glm-4-flash',
+                        messages: [{
+                            role: 'user',
+                            content: '请回答: 1+1=? (只回答数字)'
+                        }],
+                        max_tokens: 100
+                    })
+                });
+
+                const elapsed = Date.now() - startTime;
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = data.content?.[0]?.text || '无法解析响应';
+                    log('apiResult', `✅ 成功!\n\n响应时间: ${elapsed}ms\n状态码: ${response.status}\n\nAPI返回:\n${content}`, 'success');
+                } else {
+                    const errorData = await response.json().catch(() => ({ error: '无法解析错误响应' }));
+                    log('apiResult', `❌ API返回错误!\n\n状态码: ${response.status}\n${response.statusText}\n\n错误详情:\n${JSON.stringify(errorData, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                log('apiResult', `❌ 请求失败!\n\n错误类型: ${error.name}\n错误消息: ${error.message}\n\n可能原因:\n1. 网络连接问题\n2. CORS跨域限制\n3. API地址无法访问\n\n请检查浏览器控制台获取更多信息`, 'error');
+            }
+        }
+
+        async function testNetworkConnectivity() {
+            log('networkResult', '正在测试网络连接...', 'info');
+
+            const tests = [
+                { name: '智谱AI API', url: 'https://open.bigmodel.cn' },
+                { name: '本地服务器', url: 'http://localhost:8004' },
+                { name: 'Chart.js CDN', url: 'https://cdn.jsdelivr.net' }
+            ];
+
+            let results = [];
+
+            for (const test of tests) {
+                try {
+                    const response = await fetch(test.url, { method: 'HEAD', mode: 'no-cors' });
+                    results.push(`✅ ${test.name}: 可访问`);
+                } catch (error) {
+                    results.push(`❌ ${test.name}: ${error.message}`);
+                }
+            }
+
+            log('networkResult', results.join('\n'), results.every(r => r.startsWith('✅')) ? 'success' : 'error');
+        }
+
+        function showBrowserInfo() {
+            const info = {
+                '用户代理': navigator.userAgent,
+                '语言': navigator.language,
+                'Cookie启用': navigator.cookieEnabled,
+                '在线状态': navigator.onLine ? '在线' : '离线',
+                '平台': navigator.platform,
+                'JavaScript版本': 'ES6+',
+                'localStorage可用': typeof Storage !== 'undefined',
+                'Fetch API可用': typeof fetch !== 'undefined'
+            };
+
+            const text = Object.entries(info)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n');
+
+            log('browserResult', text, 'info');
+        }
+
+        // 页面加载时自动运行一些测试
+        window.onload = function() {
+            showBrowserInfo();
+            testNetworkConnectivity();
+        };
+    </script>
+</body>
+</html>
