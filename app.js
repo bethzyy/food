@@ -1192,12 +1192,13 @@ ${JSON.stringify(recommendation, null, 2)}
             console.log('年月日:', year, month, day);
 
             let result = null;
+            let currentTerm = null; // 当前所处的节气
 
-            // 遍历所有节气
+            // 先找到当前日期所处的节气期间
             for (const term of this.chineseCalendar.solarTerms) {
                 const [startDay, endDay] = term.dayRange;
 
-                // 检查当前日期是否在节气范围内(前后各2天)
+                // 检查当前日期是否在这个节气的开始日±2天范围内
                 if (term.month === month && day >= startDay - 2 && day <= endDay + 2) {
                     // 计算当前日期与节气开始日的距离
                     const daysDiff = day - startDay;
@@ -1227,6 +1228,25 @@ ${JSON.stringify(recommendation, null, 2)}
                         return { name: term.name, relation: 'dayAfterTomorrow', daysDiff: -2 };
                     }
                 }
+
+                // 检查当前日期是否在这个节气期间（用于判断当前所处的节气）
+                // 如果当前日期大于等于节气开始日，则记录为当前节气
+                if (term.month === month && day >= startDay) {
+                    if (!currentTerm || (currentTerm && term.dayRange[0] > currentTerm.dayRange[0])) {
+                        currentTerm = term;
+                    }
+                }
+                // 跨月情况：当前月份小于节气月份，说明是上个月的节气
+                else if (term.month > month || (term.month === month && day < startDay)) {
+                    // 这是下一个节气，所以currentTerm就是当前节气
+                    break;
+                }
+            }
+
+            // 如果没有找到前后2天内的节气，返回当前所处的节气
+            if (currentTerm) {
+                console.log('✓ 当前所处节气期间:', currentTerm.name);
+                return { name: currentTerm.name, relation: 'current', daysDiff: 0 };
             }
 
             console.log('✗ 没有找到符合条件的节气');
@@ -1278,6 +1298,12 @@ ${JSON.stringify(recommendation, null, 2)}
 
         console.log('✓ DOM元素获取完成');
 
+        // 清理之前动态插入的卡片（综合建议、茶道品评等）
+        if (resultSection) {
+            const dynamicCards = resultSection.querySelectorAll('.overall-advice-card, .tea-evaluation-card');
+            dynamicCards.forEach(card => card.remove());
+        }
+
         // 立即禁用按钮并显示加载状态
         generateBtn.disabled = true;
         generateBtn.innerHTML = `⏳ ${i18n.t('button.generating')}`;
@@ -1290,21 +1316,30 @@ ${JSON.stringify(recommendation, null, 2)}
             resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // 显示加载动画,包含步骤进度
-        loadingSpinner.style.display = 'block';
-        loadingSpinner.innerHTML = `
-            <div class="spinner"></div>
-            <p class="loading-text">🤖 ${i18n.t('loading.generating')}</p>
-            <div class="loading-steps">
-                <div class="step active" id="step1">✓ ${i18n.t('loading.step1')}</div>
+        // 显示加载动画,包含步骤进度（添加安全检查）
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'block';
+            loadingSpinner.innerHTML = `
+                <div class="spinner"></div>
+                <p class="loading-text">🤖 ${i18n.t('loading.generating')}</p>
+                <div class="loading-steps">
+                    <div class="step active" id="step1">✓ ${i18n.t('loading.step1')}</div>
                 <div class="step" id="step2">○ ${i18n.t('loading.step2')}</div>
                 <div class="step" id="step3">○ ${i18n.t('loading.step3')}</div>
                 <div class="step" id="step4">○ ${i18n.t('loading.step4')}</div>
             </div>
             <p class="loading-hint">⏰ ${i18n.t('loading.estimated_time')}</p>
         `;
-        recommendationContent.innerHTML = '';
-        document.getElementById('nutritionCard').style.display = 'none';
+        }
+
+        if (recommendationContent) {
+            recommendationContent.innerHTML = '';
+        }
+
+        const nutritionCard = document.getElementById('nutritionCard');
+        if (nutritionCard) {
+            nutritionCard.style.display = 'none';
+        }
 
         // 获取用户输入
         const dateInput = document.getElementById('dateInput').value;
@@ -1335,7 +1370,7 @@ ${JSON.stringify(recommendation, null, 2)}
         const termRelation = this.getSolarTermDayRelation(date);
 
         // 构建节气描述：直接使用前端显示的完整描述，如"前日小寒"
-        let solarTermDesc = '立春'; // 默认值
+        let solarTermDesc = '小寒'; // 默认值改为冬季的第一个节气
         if (termRelation) {
             // 根据关系构建描述
             const relationMap = {
@@ -1343,9 +1378,10 @@ ${JSON.stringify(recommendation, null, 2)}
                 'yesterday': '昨日',
                 'dayBeforeYesterday': '前日',
                 'tomorrow': '明日',
-                'dayAfterTomorrow': '后日'
+                'dayAfterTomorrow': '后日',
+                'current': '' // 当前所处节气，不加前缀
             };
-            solarTermDesc = `${relationMap[termRelation.relation]}${termRelation.name}`;
+            solarTermDesc = `${relationMap[termRelation.relation]}${termRelation.name}`.trim();
             console.log('  - 节气描述:', solarTermDesc);
         } else {
             console.log('  - 未找到节气信息，使用默认值');
@@ -1389,8 +1425,10 @@ ${JSON.stringify(recommendation, null, 2)}
 
             console.log('开始渲染推荐结果...');
 
-            // 隐藏加载动画
-            loadingSpinner.style.display = 'none';
+            // 隐藏加载动画（添加安全检查）
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'none';
+            }
 
             // 恢复按钮状态
             generateBtn.disabled = false;
@@ -1906,6 +1944,7 @@ ${JSON.stringify(recommendation, null, 2)}
 
         const recommendationContent = document.getElementById('recommendationContent');
         const dietType = document.querySelector('input[name="dietType"]:checked').value;
+        const resultSection = document.getElementById('resultSection');
 
         console.log('当前饮食类型:', dietType);
 
@@ -1916,6 +1955,30 @@ ${JSON.stringify(recommendation, null, 2)}
                 titleElement.innerHTML = `<span class="section-icon">🍵</span><span data-i18n="dish.title">${i18n.t('dish.tea')}</span>`;
             } else {
                 titleElement.innerHTML = `<span class="section-icon">🍲</span><span data-i18n="dish.title">${i18n.t('dish.title')}</span>`;
+            }
+        }
+
+        // 先在recommendation-card之前插入综合建议
+        // 移除之前存在的综合建议卡片（如果有）
+        const existingAdviceCard = resultSection.querySelector('.overall-advice-card');
+        if (existingAdviceCard) {
+            existingAdviceCard.remove();
+        }
+
+        // 在recommendation-card之前插入综合建议
+        if (recommendation.overallAdvice) {
+            const adviceCard = document.createElement('div');
+            adviceCard.className = 'info-card overall-advice-card';
+            adviceCard.innerHTML = `
+                <h3 class="card-title">💡 综合建议</h3>
+                <div class="card-content">
+                    <div class="advice-content">${recommendation.overallAdvice}</div>
+                </div>
+            `;
+
+            const recommendationCard = resultSection.querySelector('.recommendation-card');
+            if (recommendationCard) {
+                resultSection.insertBefore(adviceCard, recommendationCard);
             }
         }
 
@@ -2002,16 +2065,6 @@ ${JSON.stringify(recommendation, null, 2)}
         dishesHtml += '</div>';
 
         html += dishesHtml;
-
-        // 显示整体建议（如果存在）- 放在菜品后面
-        if (recommendation.overallAdvice) {
-            html += `
-                <div class="overall-advice-card">
-                    <h3 class="advice-title">💡 综合建议</h3>
-                    <div class="advice-content">${recommendation.overallAdvice}</div>
-                </div>
-            `;
-        }
 
         recommendationContent.innerHTML = html;
 
@@ -2194,6 +2247,34 @@ ${JSON.stringify(recommendation, null, 2)}
     // 显示茶饮推荐
     displayTeaRecommendation(recommendation) {
         const recommendationContent = document.getElementById('recommendationContent');
+        const resultSection = document.getElementById('resultSection');
+
+        // 先在recommendation-card之前插入茶道品评
+        // 移除之前存在的茶道品评卡片（如果有）
+        const existingEvaluationCard = resultSection.querySelector('.tea-evaluation-card');
+        if (existingEvaluationCard) {
+            existingEvaluationCard.remove();
+        }
+
+        // 在recommendation-card之前插入茶道品评
+        if (recommendation.overallEvaluation) {
+            const evaluationCard = document.createElement('div');
+            evaluationCard.className = 'info-card tea-evaluation-card';
+            evaluationCard.innerHTML = `
+                <h3 class="card-title">📜 茶道品评</h3>
+                <div class="card-content">
+                    <p><strong>茶性：</strong>${recommendation.overallEvaluation.teaNature || '未注明'}</p>
+                    <p><strong>功效：</strong>${recommendation.overallEvaluation.mainEffects || '未注明'}</p>
+                    <p><strong>最佳饮用时间：</strong>${recommendation.overallEvaluation.bestTime || '未注明'}</p>
+                    <p style="margin-top: 12px; line-height: 1.8;">${recommendation.overallEvaluation.summary || ''}</p>
+                </div>
+            `;
+
+            const recommendationCard = resultSection.querySelector('.recommendation-card');
+            if (recommendationCard) {
+                resultSection.insertBefore(evaluationCard, recommendationCard);
+            }
+        }
 
         let teasHtml = '<div class="dish-grid">';
 
@@ -2274,24 +2355,11 @@ ${JSON.stringify(recommendation, null, 2)}
 
         teasHtml += '</div>';
 
-        // 添加茶道评语
-        if (recommendation.overallEvaluation) {
-            teasHtml += `
-                <div class="info-card">
-                    <h3 class="card-title">📜 茶道品评</h3>
-                    <div class="card-content">
-                        <p><strong>茶性：</strong>${recommendation.overallEvaluation.teaNature || '未注明'}</p>
-                        <p><strong>功效：</strong>${recommendation.overallEvaluation.mainEffects || '未注明'}</p>
-                        <p><strong>最佳饮用时间：</strong>${recommendation.overallEvaluation.bestTime || '未注明'}</p>
-                        <p style="margin-top: 12px; line-height: 1.8;">${recommendation.overallEvaluation.summary || ''}</p>
-                    </div>
-                </div>
-            `;
-        }
+        let html = teasHtml;
 
         // 添加推荐理由
         if (recommendation.reasoning) {
-            teasHtml += `
+            html += `
                 <div class="reasoning-card">
                     <h3 class="card-title">📜 推荐缘由</h3>
                     <div class="reasoning-content">
@@ -2338,7 +2406,7 @@ ${JSON.stringify(recommendation, null, 2)}
 
         // 添加茶道叮嘱
         if (recommendation.teaTips) {
-            teasHtml += `
+            html += `
                 <div class="tips-card">
                     <h3 class="card-title">💡 茶道叮嘱</h3>
                     <div class="tips-grid">
@@ -2371,12 +2439,15 @@ ${JSON.stringify(recommendation, null, 2)}
             `;
         }
 
-        recommendationContent.innerHTML = teasHtml;
+        recommendationContent.innerHTML = html;
 
         // 显示推荐理由卡片（如果有tea.reasoning字段）
         if (recommendation.items && recommendation.items.some(tea => tea.reasoning)) {
             this.displayReasoning(recommendation);
         }
+
+        // 显示小红书分享按钮
+        this.showXhsShareButton(recommendation);
     }
 
     // 显示营养分析图表
@@ -2535,7 +2606,7 @@ ${JSON.stringify(recommendation, null, 2)}
             const shareBtn = document.getElementById('xiaohongshuShareBtnFixed');
             if (shareBtn) {
                 shareBtn.disabled = true;
-                shareBtn.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">正在生成素材...</span>';
+                shareBtn.innerHTML = '<span class="btn-text">正在生成素材...</span>';
             }
 
             // 获取当前设置
@@ -2589,7 +2660,7 @@ ${JSON.stringify(recommendation, null, 2)}
 
             if (shareBtn) {
                 shareBtn.disabled = false;
-                shareBtn.innerHTML = '<span class="btn-icon">📱</span><span class="btn-text" data-i18n="button.xiaohongshu_share">一键分享到小红书</span>';
+                shareBtn.innerHTML = '<span class="btn-text" data-i18n="button.xiaohongshu_share">一键分享到小红书</span>';
             }
 
             // 显示预览确认界面
@@ -2601,7 +2672,7 @@ ${JSON.stringify(recommendation, null, 2)}
             const shareBtn = document.getElementById('xiaohongshuShareBtnFixed');
             if (shareBtn) {
                 shareBtn.disabled = false;
-                shareBtn.innerHTML = '<span class="btn-icon">📱</span><span class="btn-text" data-i18n="button.xiaohongshu_share">一键分享到小红书</span>';
+                shareBtn.innerHTML = '<span class="btn-text" data-i18n="button.xiaohongshu_share">一键分享到小红书</span>';
             }
 
             alert('❌ 生成失败：' + error.message);
@@ -2615,6 +2686,9 @@ ${JSON.stringify(recommendation, null, 2)}
 
         if (shareSection && shareBtn) {
             shareSection.style.display = 'block';
+
+            // 强制重置按钮HTML（移除可能的图标）
+            shareBtn.innerHTML = '<span class="btn-text" data-i18n="button.xiaohongshu_share">一键分享到小红书</span>';
 
             // 移除旧的事件监听器（如果存在）
             const newBtn = shareBtn.cloneNode(true);
@@ -2889,8 +2963,16 @@ ${JSON.stringify(recommendation, null, 2)}
             '健脾': '🫐',
             '安神': '😴',
             '清火': '🔥',
-            '美白': '✨',
-            '祛湿': '💧'
+            '祛湿': '💧',
+            '益气': '💪',
+            '补血': '❤️',
+            '润肺': '🌿',
+            '疏肝': '🍀',
+            '生津': '💧',
+            '滋阴': '🌙',
+            '温阳': '☀️',
+            '固表': '🛡️',
+            '美白': '✨'
         };
 
         const emoji = emojiMap[mealPeriod] || '🍲';
@@ -3028,8 +3110,16 @@ ${JSON.stringify(recommendation, null, 2)}
             '健脾': '#健脾养胃',
             '安神': '#安神助眠',
             '清火': '#清热降火',
-            '美白': '#美白养颜',
-            '祛湿': '#祛湿养生'
+            '祛湿': '#祛湿养生',
+            '益气': '#益气养生',
+            '补血': '#补血养颜',
+            '润肺': '#润肺养生',
+            '疏肝': '#疏肝解郁',
+            '生津': '#生津止渴',
+            '滋阴': '#滋阴补肾',
+            '温阳': '#温阳补气',
+            '固表': '#固表止汗',
+            '美白': '#美白养颜'
         };
         if (goalTags[healthGoal]) {
             tags.push(goalTags[healthGoal]);

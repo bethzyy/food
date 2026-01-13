@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **Traditional Chinese Medicine (TCM) Dietary Recommendation Web Application** that combines ancient Chinese wellness wisdom with modern AI technology. The application uses ZhipuAI GLM models (specifically GLM-4.7 based on performance testing) to generate personalized dietary recommendations based on 24 Solar Terms, TCM Ganzhi calendar, weather conditions, meal periods, and diet types.
 
-**Latest Update (2026-01-07)**: Complete internationalization (i18n) system added with Chinese/English support.
+**Latest Update (2026-01-13)**: Added 8 new health goal options + reorganized display layout (综合建议前置) + improved solar term detection logic + added tea recommendation XHS sharing.
 
 ## Quick Start
 
@@ -754,3 +754,5 @@ Should only find:
 - **v9**: Heat optimization + language button redesign + UI compaction
 - **v10**: Ingredient gram display + minimalist language button + heat icon optimization
 - **v11** (2026-01-07): Complete internationalization system + prompt caching + recommendation caching + Ganzhi removal + comprehensive language support
+- **v12** (2026-01-13): Added 8 new health goal options (益气、补血、润肺、疏肝、生津、滋阴、温阳、固表) with comprehensive TCM dietary theory support for both food and tea recommendations
+- **v13** (2026-01-13): Reorganized display layout (综合建议/茶道品评前置) + improved solar term detection (全年节气判断) + DOM safety checks + tea XHS sharing + removed button icon

@@ -30,7 +30,7 @@ const i18n = {
             'button.save': '保存',
             'button.generating': '正在生成...',
             'button.generating_short': '生成推荐',
-            'button.xiaohongshu_share': '📱 一键分享到小红书',
+            'button.xiaohongshu_share': '一键分享到小红书',
 
             // API Key模态框
             'modal.apikey.title': '🔑 配置API Key',
@@ -56,8 +56,16 @@ const i18n = {
             'goal.spleen': '🫐 健脾',
             'goal.calming': '😴 安神',
             'goal.fire': '🔥 清火',
-            'goal.whitening': '✨ 美白',
             'goal.dampness': '💧 祛湿',
+            'goal.qi': '💪 益气',
+            'goal.blood': '❤️ 补血',
+            'goal.lung': '🌿 润肺',
+            'goal.liver': '🍀 疏肝',
+            'goal.fluid': '💧 生津',
+            'goal.yin': '🌙 滋阴',
+            'goal.yang': '☀️ 温阳',
+            'goal.surface': '🛡️ 固表',
+            'goal.whitening': '✨ 美白',
 
             // 天气
             'weather.sunny': '晴',
@@ -195,7 +203,7 @@ const i18n = {
             'button.save': 'Save',
             'button.generating': 'Generating...',
             'button.generating_short': 'Generate',
-            'button.xiaohongshu_share': '📱 Share to XiaoHongShu',
+            'button.xiaohongshu_share': 'Share to XiaoHongShu',
 
             // API Key模态框
             'modal.apikey.title': '🔑 Configure API Key',
@@ -221,8 +229,16 @@ const i18n = {
             'goal.spleen': '🫐 Spleen Care',
             'goal.calming': '😴 Calming',
             'goal.fire': '🔥 Clear Fire',
-            'goal.whitening': '✨ Whitening',
             'goal.dampness': '💧 Remove Dampness',
+            'goal.qi': '💪 Boost Qi',
+            'goal.blood': '❤️ Nourish Blood',
+            'goal.lung': '🌿 Moisturize Lung',
+            'goal.liver': '🍀 Soothe Liver',
+            'goal.fluid': '💧 Generate Fluids',
+            'goal.yin': '🌙 Nourish Yin',
+            'goal.yang': '☀️ Warm Yang',
+            'goal.surface': '🛡️ Strengthen Surface',
+            'goal.whitening': '✨ Whitening',
 
             // 天气
             'weather.sunny': 'Sunny',
